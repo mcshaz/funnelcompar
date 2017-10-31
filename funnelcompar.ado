@@ -22,7 +22,7 @@ forv i1=1(1)`maxmarkcond' {
 	local colormarkcondi `"`colormarkcondi' COLORMARKCOND`i1'(string asis)"'
 	local legendmarkcondi `"`legendmarkcondi' LEGENDMARKCOND`i1'(string asis)"'
 	local optionsmarkcondi `"`optionsmarkcondi' OPTIONSMARKCOND`i1'(string asis)"'
-	}
+}
 /*****************/
 /** SYNTAX **/
 /*****************/
@@ -38,8 +38,7 @@ syntax varlist(min=3 max=4) [if] [in], [BINOMial POISson CONTinuous smr ///
 
 if "`exact'"!=""{
 	version 10.0
-	}
-		
+}
 marksample touse,strok
 tokenize `varlist'
 local value `1'   
@@ -91,7 +90,7 @@ if "`binomial'"=="" & "`poisson'"=="" & "`continuous'"==""{
 	di as error "If -poisson- is specified, then data are considered to be rates arising from a poisson distribution or SMR"
 	di as error "If -continuous- is specified, then data considered to be means arising from a normal distribution"
 	error 198
-	}
+}
 local options "binomial poisson continuous"
 foreach opt of local options{ 
 	if "``opt''"!=""{
@@ -99,55 +98,53 @@ foreach opt of local options{
 			if "``othopt''"!="" & "`opt'"!="`othopt'" {
 				di as error "Only one option between -binomial-, -poisson- and -continuous- might be specified, while you specified both -`opt'- and -`othopt'-"
 				error 198
-				}
 			}
 		}
 	}
+}
 if "`sdvalue'"!="" &"`continuous'"==""{
 	di as error "The fourth variable of the command '`sdvalue'' should only be specified when -continuous- option is also specified"
 	di as error "In this case '`sdvalue'' is assumed to contain the standard errors of the means contained in '`value''"
 	di as error "Recall that -continuous- must specified if data contained in '`value'' are means arising from a normal distribution"
 	error 198
-	}
-
+}
 if "`smr'"!="" &"`poisson'"==""{
 	di as error "Option -smr- implies that option -poisson- must be specified "
 	error 198
-	}
+}
 if "`ext_stand'"!="" &"`noweight'"!=""{
 	di as error "Option -ext_stand- is incompatible with -noweight- option,"
 	di as error "since -ext_stand- assumes that the data are to be compared against and external standard "
 	di as error "whereas -noweight- assumes that the data are to be compared against the internal noweighted mean"
 	error 198
-	}
+}
 if "`ext_sd'"!="" & "`continuous'"=="" {
 	di as error "Option -ext_sd- only might be specified if the -continuous- option is specified,"
 	di as error "and only in case the data are considered to be means arising from a normal distribution "
 	di as error "and one wants to compare them against a standand mean with external standard deviation -ext_sd-"
 	error 198
-	}
+}
 if "`sdvalue'"=="" & "`ext_sd'"==""&"`continuous'"!=""{
 	di as error "When the -continuous- option is specified either a fourth variable or the external standard deviation -ext_sd- option should be specified"
 	di as error "in order to let the program decide which reference standard deviation should be assumed"
 	error 198
-	}
+}
 if "`sdvalue'"!="" & "`ext_sd'"!=""{
 	di as error "You specified both variable '`sdvalue'' and the external standard deviation -ext_sd- option"
 	di as error "You should decide whether the reference standard deviation should be computed from the data contained in '`sdvalue''"
 	di as error "or the program should assume the number `ext_sd' as reference standard deviation"
 	error 198
-	}
+}
 if "`smr'"!="" & ("`ext_stand'"!="" |"`noweight'"!="") {
 	di as error "Option 'smr' only might be specified in case of indirectly standardised rates "
 	di as error "and in this case neither 'ext_stand' nor 'noweight' might be specified"
 	di as error "since the external standard is fixed to the expected rate"
 	error 198
-	}
+}
 if "`exact'"!="" & "`continuous'"!=""{
 	di as error "Option 'exact' does not apply to the 'continuous' case"
 	error 198
-	}
-
+}
 if "`onesided'" != "" & "`onesided'" != "lower" & "`onesided'" != "upper" {
 	di as error "onesided() must be unspecified, lower or upper"
 	error 198
@@ -157,13 +154,13 @@ if (`"`markunits'"'!=""&"`markall'"!=""){
 	di as error "-markunits- lists the units that must be labelled""
 	di as error "-markall- specifies that all units must be labelled with their value labels (or with their values if no label is available)"
 	error 198
-	}
+}
 if (`"`markunits'"'==""&"`markscatteroptions'"!=""){
 	di as error "-markscatteroptions- can only be specified if -markunits- is specified"
 	di as error "-markunits- lists the units that must be labelled"
 	di as error "-markscatteroptions- specifies that they should be also marked with some option"
 	error 198
-	}
+}
 forv i1=0(1)`maxmarkcond' {
 	local i=cond(`i1'==0,"","`i1'")
 	if `"`markcond`i''"'!=""{
@@ -171,23 +168,23 @@ forv i1=0(1)`maxmarkcond' {
 		if _rc!=0{
 			di as error `"Option -markcond`i'- contains the string "`markcond`i''" which is not a valid condition on the dataset"'
 			error 198
-			}
 		}
 	}
+}
 if "`contours'" == "" { // default significance contours
 	local contours "5 .2"
-	}
+}
 if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `markcontour' is one of the contours	
 	local nmarkcont = wordcount("`markcontour'")
 	if `nmarkcont'>1{
 		di as error `"Option -markcontour- should contain a single value chosen among the contours `contours' that you asked to plot"'
 		error 198
-		}
+	}
 	if subinword("`contours'","`markcontour'","",1)=="`contours'"{
 		di as error `"Option -markcontour- contains the string "`markcontour'" which is not one of the contours `contours' that you asked to compute"'
 		error 198
-		}
 	}
+}
 /*****************/
 /** DEFAULTS **/
 /*****************/
@@ -195,16 +192,16 @@ if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `ma
 local namedistr=cond("`binomial'"!="","binomial",cond("`poisson'"!="","Poisson","normal"))
 if "`constant'"==""{
 	local constant "1"
-	}
+}
 if "`unitlabel'"==""{
 	local labelunit:variable label `unit'
 	if "`labelunit'"!=""{
 		local unitlabel "`labelunit'"
-		}
+	}
 	else{
 		local unitlabel "Units"
-		}
 	}
+}
 if "`scattercolor'" == "" { // default significance contours
 	local scattercolor "black"
 }
@@ -212,22 +209,21 @@ if "`scattercolor'" == "" { // default significance contours
 local ncontours = wordcount("`contours'")
 if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"==""{ //default for contour whose external should be marked
 	local markcontour=word(`"`contours'"',1)
-	}
+}
 /*a string with a dot cannot be the name of a local macro; hence in the names `c' of the confidence levels dots are substituted by the string -dot-, and the corresponding numbers are stored in local macros number`c'*/
 local contours: subinstr local contours "." "_",all
 local markcontour: subinstr local markcontour "." "_",all
 foreach c of local contours{
 	local number`c' : subinstr local c "_" ".",all
-	}
+}
 if "`vertical'"!=""{ //reverse x and y axis if vertical is not specified (the default is horizontal)
 	local x "x"
 	local y "y"
-	}
+}
 else{
 	local x "y"
 	local y "x"
-	}
-
+}
 if "`solidcontours'" == "solidcontours" { // use dashed or solid contours
 	forvalues m = 1/`ncontours' {
 		local linepatt `"`linepatt' solid"'
@@ -261,18 +257,16 @@ forvalues j = 1/`ncontours' { // shades for shaded contours
 
 if "`aspectratio'" != "" { // default aspectratio
 	local aspectratio "aspectratio(`aspectratio')"
-	}
+}
 if "`linecolor'" == "" { // default color for reference line
 	local linecolor "red" 
-	}
-
+}
 if `"`markup'"'!="" & "`markupcolor'"==""{ //default for marking points upper the contour
 	local markupcolor "orange"
-	}
+}
 if `"`marklow'"'!="" & "`marklowcolor'"==""{ //default for marking points lower the contour
 	local marklowcolor "blue"
-	}
-
+}
 /*AUXILIARY LOCAL MACROS*/
 local plusu="+"
 local plusl="-"
@@ -284,35 +278,34 @@ local plusl="-"
 if "`ext_stand'"==""{
 	if "`smr'"!=""{
 		local ext_stand="`constant'"
-		}
+	}
 	else{
 		if "`noweight'"==""{
 			qui su `value' [fw= `disp'] if  `touse',meanonly
-			}
+		}
 		else{
 			qui su `value' if  `touse',meanonly
-			}
-		local ext_stand=string(r(mean))
 		}
+		local ext_stand=string(r(mean))
 	}
+}
 if "`binomial'"!=""{
 	local ext_sd=string(sqrt(`ext_stand'*(`constant'-`ext_stand')))
-	}
+}
 if "`poisson'"!=""{
 	local ext_sd=string(sqrt(`ext_stand')*sqrt(`constant'))
-	}
+}
 if "`ext_sd'"=="" & "`continuous'"!=""{
 	tempvar variance
 	gen `variance'=`sdvalue'^2
 	if "`noweight'"==""{
 		qui su `variance' [fw= `disp'] if `touse',meanonly
-		}
+	}
 	else{
 		qui su `variance' if `touse',meanonly
-		}
-	local ext_sd=string(sqrt(r(mean)))
 	}
-
+	local ext_sd=string(sqrt(r(mean)))
+}
 /*generate the dataset of the reference curves*/
 local `y'var "_`y'var"
 qui gen ``y'var' = `disp'
@@ -325,13 +318,13 @@ if "`exact'"==""{
 		local lev=100-`number`c''
 		qui gen _ub`c'=`ext_stand' + invnorm(1-`number`c''/(2*100))*`ext_sd'/sqrt(``y'var') if  `touse' 
 		qui gen _lb`c'=`ext_stand' - invnorm(1-`number`c''/(2*100))*`ext_sd'/sqrt(``y'var') if  `touse' 
-		}
 	}
+}
 else{
 	qui su ``y'var' if `touse', meanonly
 	if "`step'"==""{
 		local step=max(round(ceil((r(max)-r(min))/10),10),1)
-		}
+	}
 	local `y'max = ceil(r(max)+`step'/10)
 	local `y'min =max(1,floor(r(min)-`step'/10))
 	local obs=ceil((``y'max'-``y'min'+1)/`step')+1
@@ -361,16 +354,16 @@ else{
 					mata: i = st_numscalar("scalar_i")
 					qui mata: invbinom2(x[i], `theta',`lev`lim'' )
 					qui replace rp`lim' = r(rp) in `i'
-					}
+				}
 				qui gen rp`lim'm1=rp`lim'-1
 				qui gen _`lim'b`c'=``y'var'^(-1)*(rp`lim'-((binomial(``y'var',rp`lim',`theta')-`lev`lim'')/(binomial(``y'var',rp`lim',`theta')-binomial(``y'var',rp`lim'm1,`theta'))))
 				qui gen _`lim'b`c'app=`theta' `plus`lim'' invnorm(1-`number`c''/(2*100))*sqrt(``y'var'^(-1)*((`theta'*(1-`theta'))))
 				foreach var of varlist _`lim'b`c' _`lim'b`c'app {
 					qui replace `var'=0 if `var'<0
 					qui replace `var'=1 if `var'>1
-					}
 				}
 			}
+		}
 		if "`poisson'"!=""{
 			foreach lim in u l{
 				local theta=`ext_stand'/`constant'
@@ -385,21 +378,21 @@ else{
 					mata: i = st_numscalar("scalar_i")
 					qui mata: invpoisson2(x[i], `theta',`lev`lim'' )
 					qui replace rp`lim' = r(rp) in `i'
-					}
+				}
 				qui gen rp`lim'm1=rp`lim'-1
 				qui gen _`lim'b`c'=``y'var'^(-1)*(rp`lim'-((poisson(`theta'*``y'var',rp`lim')-`lev`lim'')/(poisson(`theta'*``y'var',rp`lim')-poisson(`theta'*``y'var',rp`lim'm1))))
 				qui gen _`lim'b`c'app=`theta' `plus`lim'' invnorm(1-`number`c''/(2*100))*sqrt(``y'var'^(-1)*(`theta'))
 				foreach var of varlist _`lim'b`c' _`lim'b`c'app {
 					qui replace `var'=0 if `var'<0
-					}
 				}
 			}
+		}
 		foreach lim in u l{
 			foreach var of varlist _`lim'b`c' _`lim'b`c'app {
 				qui replace `var'= `var'*`constant' 
-				}
-			label variable _`lim'b`c' `"`lim'b for variable `value' at confidence level `lev' assuming `namedistr' distribution"'
 			}
+			label variable _`lim'b`c' `"`lim'b for variable `value' at confidence level `lev' assuming `namedistr' distribution"'
+		}
 		keep ``y'var' _u* _l*
 		sort ``y'var'
 		tempfile `c'file
@@ -408,17 +401,17 @@ else{
 		sort ``y'var'
 		qui merge ``y'var' using ``c'file', update
 		drop _merge
-		}
 	}
+}
 if `"`saving'"'!=""{
 	preserve
 	local namefile=cond(strmatch(`"`saving'"',"*.dta")==1,`"`saving'"',`"`saving'.dta"')
 	if ("`binomial'"!=""| "`poisson'"!=""){
 		local methodcurves=cond("`exact'"=="","normal approximation","exact method")
-		}
+	}
 	else{
 		local methodcurves ""
-		}
+	}
 	label data "Dataset for funnel plot (see characheristics with -char list-)"
 	label variable _funnel "Instruction for funnel"
 	label define funnel_label 0 "Not to use" 1 "Points for scatter" 2 "Points for curves"
@@ -427,11 +420,11 @@ if `"`saving'"'!=""{
 	local target_sd `"`ext_sd'"'
 	foreach char in namedistr target_val target_sd methodcurves{
 		char define _dta[`char'] `"``char''"'
-		}
+	}
 	qui save `namefile',replace
 	di in ye `"File for funnel plot generation was saved in `namefile'"'
 	restore
-	}
+}
 // export instructions (non documented)
 if "`export_instr'"!=""{
 	di in ye "export_instr"
@@ -441,7 +434,7 @@ if "`export_instr'"!=""{
 		qui su ``y'var' if `touse', meanonly
 		if "`step'"==""{
 			local step=max(round(ceil((r(max)-r(min))/10),10),1)
-			}
+		}
 		local `y'max = ceil(r(max)+`step'/10)
 		local `y'min =max(1,floor(r(min)-`step'/10))
 		local obs=ceil((``y'max'-``y'min'+1)/`step')+1
@@ -455,8 +448,8 @@ if "`export_instr'"!=""{
 			local lev=100-`number`c''
 			qui replace _ub`c'=`ext_stand' + invnorm(1-`number`c''/(2*100))*`ext_sd'/sqrt(``y'var') if  `touse' |_funnel==2
 			qui replace _lb`c'=`ext_stand' - invnorm(1-`number`c''/(2*100))*`ext_sd'/sqrt(``y'var') if  `touse' |_funnel==2
-			}
 		}
+	}
 	qui gen group=""
 	qui gen symbol=""
 	qui gen color="black"
@@ -466,12 +459,12 @@ if "`export_instr'"!=""{
 			qui replace group="`i1'" if `markcond`i'' & _funnel==1
 			foreach symbol in circle diamond triangle square plus x{
 				qui replace symbol="`symbol'" if  strmatch("`optionsmarkcond`i''","*`symbol'*") & group=="`i1'" 
-				}
+			}
 			if `"`colormarkcond`i''"'!=""{
 				qui replace color="`colormarkcond`i''" if group=="`i1'" 
-				}
 			}
-		} 
+		}
+	}
 	tempfile scatterpoints
 	preserve
 	qui keep if _funnel==1
@@ -483,7 +476,7 @@ if "`export_instr'"!=""{
 	foreach c in `contours' {
 		rename _ub`c' `value'ub`c'
 		rename _lb`c' `value'lb`c'
-		}
+	}
 	qui gen `value'ref=`ext_stand'
 	qui reshape long `value',i(``y'var' _funnel) j(id_curve)  string
 	append using `scatterpoints'
@@ -493,8 +486,7 @@ if "`export_instr'"!=""{
 	order x y `unit' _funnel id_curve color symbol
 	qui save `export_instr',replace
 	use `namefile',clear
-	}
-
+}
 /**********************/
 /** GRAPH GENERATION **/
 /**********************/
@@ -512,18 +504,18 @@ foreach c in `contours' {
 		local lub`c' "lc(none)"
 		local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
 		local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
-		}
+	}
 	else if "`onesided'" == "upper" {
 		local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
 		local llb`c' "lc(none)"
 		local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
-		}
+	}
 	else{
 		local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
 		local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
 		local contourlabels`c' `"`=2*`h'' "Sign. `number`c''%""'
-		}
 	}
+}
 //command for contours
 foreach c in `contours'{
 	foreach lim in u l{
@@ -533,15 +525,14 @@ foreach c in `contours'{
 			local invnorm=invnorm(1-`number`c''/(2*100))
 			local args`lim'=cond("`vertical'"!=""," horizontal","" )
 			local function `"`function' function `ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x) , range(`range') `l`lim'b`c'' `args`lim''  || "'
-			}
+		}
 		else{
 			local args`lim'=cond("`vertical'"!="","``y'var' _`lim'b`c'","_`lim'b`c' ``y'var' " )
 			local function `"`function' line `args`lim'' , sort `l`lim'b`c'' || "'
-			}
 		}
-	local contourlabels `"`contourlabels' `contourlabels`c''"'
 	}
-	
+	local contourlabels `"`contourlabels' `contourlabels`c''"'
+}
 //POINTS
 //marks units specified in -markunits- or -markall- options
 if (`"`markunits'"'!=""|"`markall'"!=""){
@@ -554,77 +545,77 @@ if (`"`markunits'"'!=""|"`markall'"!=""){
 			if strmatch(`"``j''"',`"`"*"'"')==0{
 				local val`k' `"``j''"'
 				local k=`k'+1
-				}
+			}
 			else{
 				local km=`k'-1
 				if `"`lab`km''"'==""{
 					local lab`km' ``j''
-					}
 				}
+			}
 			local j=`j'+1
 			gettoken `j' tokens: tokens,quotes
-			}
+		}
 		local maxval=`k'-1
 		if "`markcolor'"==""{
 			local markcolor "red"
-			}
 		}
+	}
 	else{
 		qui levelsof `unit' ,local(unitvalues) clean
 		local maxval: word count `unitvalues'
 		tokenize `unitvalues'
 		forvalues k=1/`maxval'{
 			local val`k' `"``k''"'
-			}
+		}
 		if "`markcolor'"==""{
 			local markcolor "`scattercolor'"
-			}
 		}
+	}
 	capture confirm string variable `unit'
 		if _rc==0{
 			local unitstring "1"
-			}
+		}
 	if "`markcolor'"!= `"`scattercolor'"'| "`markscatteroptions'"!=""{
 		local markscatter ""
 		forvalues k=1/`maxval'{
 			local ifunit=cond("`unitstring'"=="1",`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
 			if "`markscatteroptions'"==""{
 				local markscatteroptions `"`scatteropts'"'
-				}
+			}
 			qui count if `touse' & `ifunit'
 			if `r(N)'>0{
 				local markscatter `"`markscatter' scatter `args' if `ifunit',mc(`markcolor') `markscatteroptions' ||"'
-				}
 			}
 		}
+	}
 	local marktext ""
 	forvalues k=1/`maxval'{
 		local ifunit=cond("`unitstring'"=="1" ,`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
 		qui count if `ifunit' & `touse'
 		if `r(N)'==0{
 			di as err `"no observations satisfy condition `ifunit'"'
-			}
+		}
 		else{
 			local xvar= word("`args'",2)
 			local yvar= word("`args'",1)
 			foreach coord in x y {
 				qui levelsof ``coord'var' if `ifunit' & `touse',local(`coord'`k') clean
-				}
+			}
 			if `"`lab`k''"'==""{
 				if "`unitstring'"=="1"{
 					local lab`k': label  (`unit') `val`k''
-					}
+				}
 				else{
 					local lab`k' `"`val`k''"'
-					}
 				}
+			}
 			if `"`marktextoptions'"'==""{
 				local marktextoptions `"placement(ne)"'
-				}
-			local marktext `"`marktext' text(`y`k'' `x`k''  `"`lab`k''"', color(`markcolor') `marktextoptions')"'
 			}
+			local marktext `"`marktext' text(`y`k'' `x`k''  `"`lab`k''"', color(`markcolor') `marktextoptions')"'
 		}
 	}
+}
 //marks units upper and/or lower the contour
 foreach lev in up low{
 	if `"`mark`lev''"'!=""{
@@ -634,18 +625,18 @@ foreach lev in up low{
 		tokenize `unitvalues`lev''
 		forvalues k=1/`maxval`lev''{
 			local val`k' `"``k''"'
-			}
+		}
 		capture confirm string variable `unit'
 			if _rc==0{
 				local unitstring=1
-				}
+			}
 		if "`mark`lev'color'"!= `"`scattercolor'"'!{
 			local mark`lev'scatter ""
 			if "`markscatter`lev'options'"==""{
 				local markscatter`lev'options `"`scatteropts'"'
-				}
-			local mark`lev'scatter `"`mark`lev'scatter' scatter `args' if `if`lev'',mc(`mark`lev'color') `markscatter`lev'options' ||"'
 			}
+			local mark`lev'scatter `"`mark`lev'scatter' scatter `args' if `if`lev'',mc(`mark`lev'color') `markscatter`lev'options' ||"'
+		}
 		local mark`lev'text ""
 		forvalues k=1/`maxval`lev''{
 			local ifunit=cond("`unitstring'"=="1" ,`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
@@ -653,22 +644,22 @@ foreach lev in up low{
 			local yvar= word("`args'",1)
 			foreach coord in x y {
 				qui levelsof ``coord'var' if `ifunit' & `touse' ,local(`coord'`k') clean
-				}
+			}
 			if `"`lab`k''"'==""{
 				if "`unitstring'"!="1"{
 					local lab`lev'`k': label  (`unit') `val`k''
-					}
+				}
 				else{
 					local lab`lev'`k' `"`val`k''"'
-					}
 				}
+			}
 			if `"`marktextoptions`lev''"'==""{
 				local marktextoptions`lev' `"placement(ne)"'
-				}
-			local mark`lev'text `"`mark`lev'text' text(`y`k'' `x`k''  `"`lab`lev'`k''"', color(`mark`lev'color') `marktextoptions`lev'')"'
 			}
+			local mark`lev'text `"`mark`lev'text' text(`y`k'' `x`k''  `"`lab`lev'`k''"', color(`mark`lev'color') `marktextoptions`lev'')"'
 		}
 	}
+}
 //mark conditions specified in the -markcond`i'- options
 local markconditions ""
 forv i1=0(1)`maxmarkcond' {
@@ -676,46 +667,43 @@ forv i1=0(1)`maxmarkcond' {
 	if `"`markcond`i''"'!=""{
 		if "`optionsmarkcond`i''"==""{
 			local optionsmarkcond`i' `"`scatteropts'"'
-			}
-		local markconditions `"`markconditions' scatter `args' if `touse' & `markcond`i'',mc(`colormarkcond`i'') `optionsmarkcond`i'' ||"'
 		}
+		local markconditions `"`markconditions' scatter `args' if `touse' & `markcond`i'',mc(`colormarkcond`i'') `optionsmarkcond`i'' ||"'
 	}
+}
 // LEGEND
 if "`legendopts'" != "off" {
 	// position and other options
 	if "`legendopts'" == "" { // default legend options
 		local legendopts "ring(0) pos(2) size(small) symxsize(*.4) cols(1)"
-		}
+	}
 	//legend of units
 	local legendtot `"order( `=2*`ncontours' + 1' `"`unitlabel'"' "'
 	//legend of conditions
 	forv i1=0(1)`maxmarkcond' {
 		local i=cond(`i1'==0,"","`i1'")
 		local ip=`i1'+1
-		if `"`markcond`i''"'!=""{
-			if `"`legendmarkcond`i''"'!=""{
-				local legendtot `"`legendtot' `=2*`ncontours' +1+`ip'' `"`legendmarkcond`i''"' "'
-				}
-			}
+		if `"`markcond`i''"'!="" &`"`legendmarkcond`i''"'!=""{
+			local legendtot `"`legendtot' `=2*`ncontours' +1+`ip'' `"`legendmarkcond`i''"' "'
 		}
+	}
 	//legend of contours
 	if "`legendcontour'"!=""{
 		local legendtot `"`legendtot'  `contourlabels' "'
-		}
-	local legendtot `"`legendtot' `legendmore') `legendopts'"'
 	}
+	local legendtot `"`legendtot' `legendmore') `legendopts'"'
+}
 else{
 	local legendtot `"off"'
-	}
-	
+}
 // ACTUAL GENERATION OF GRAPH
 local graph_command `"twoway  `function' scatter `args' if `touse' & _funnel==1, mc(`scattercolor') `scatteropts' || `markconditions' `markscatter'  `markupscatter' `marklowscatter' `extraplot' , `x'line(`ext_stand',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal))  xtitle(`"`xtitle'"') ytitle(`"`ytitle'"') title(`"`title'"')    legend(`legendtot')  `marktext' `markuptext' `marklowtext' `twowayopts'"'
 if "`displaycommand'"!=""{
 	di in ye `"`graph_command'"'
-	}
+}
 if "`nodraw'"==""{
 	`graph_command'
-	}
+}
 use `dataset',clear
 drop _funnel ``y'var'
 
@@ -732,33 +720,29 @@ end
 
 mata:
 function invbinom2(n, theta, p){
-        i=0
-        do {
-            F = binomial(n, i,theta)
-            if  (F >= p) {
-            st_numscalar("r(rp)", i)
-                return(i)
-            }
-            i++
-        } while (i<=n)
-	}
+	i=0
+	do {
+		F = binomial(n, i,theta)
+		if  (F >= p) {
+		st_numscalar("r(rp)", i)
+			return(i)
+		}
+		i++
+	} while (i<=n)
+}
 end
 
 mata:
 function invpoisson2(n,theta, p){
-		expected=theta*n
-        i=0
-        do {
-            F = poisson(expected,i)
-            if  (F >= p) {
-            	st_numscalar("r(rp)", i)
-                return(i)
-            	}
-			i++
-        } while (st_isnumfmt("r(rp)")<1)
-	}
-
-
+	expected=theta*n
+	i=0
+	do {
+		F = poisson(expected,i)
+		if  (F >= p) {
+			st_numscalar("r(rp)", i)
+			return(i)
+		}
+		i++
+	} while (st_isnumfmt("r(rp)")<1)
+}
 end
-
-
