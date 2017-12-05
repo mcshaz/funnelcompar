@@ -13,7 +13,7 @@ help for {hi:funnelcompar}{right:(Silvia Forni, Rosa Gini)}
 {title:Syntax}
 
 {p 8 13 2}
-{cmd:funnelcompar} {it:value pop  unit [sdvalue]} {ifin}  {cmd:,} {opt cont:inuous/}{opt binom:ial/}{opt pois:son} [{opt smr}] [
+{cmd:funnelcompar} {it:outcome population_size identifier [std_dev]} {ifin}  {cmd:,} {opt cont:inuous/}{opt binom:ial/}{opt pois:son} [{opt smr}] [
 {it:options}] 
 
 {synoptset 28 tabbed}{...}
@@ -51,10 +51,9 @@ indicators contained in {it:value} are multiplied, e.g. 100 if they are percenta
 
 {syntab :Marking options: principal scatter}
 {synopt :{opth scattercol:or(colorstyle:color)}}colour of scatter points {p_end}
-{synopt :{opt scatter:opts(options)}}other {helpb marker_options} {p_end}
+{synopt :{opt scatter:opts(options)}}other {helpb marker_options} and {helpb marker_label_options}{p_end}
 {synopt :{opt unitlab:el(string)}}string to be used in the legend of the scatter points, instead of the variable label of {it:unit} or the string "Units" {p_end}
 {synopt :{opt markall} }specify that all scatter points should be labeled with the value label or, if there is no value label, with the actual value of the {it:unit} they represent{p_end}
-
 
 {syntab :Marking options: contours}
 {synopt :{opt markup} }specify that points upper the countour at significance {opt markcontour} should be coloured in {opt markupcolor} and labeled with the label or value of the {it:unit} they represent{p_end}
@@ -64,7 +63,7 @@ indicators contained in {it:value} are multiplied, e.g. 100 if they are percenta
 {synopt :{opt markcon:tour(num)} } option of {opt markup} and/or {opt marklow}, the default is the first contour of the numlist in {opt contours(numlist)} - if {opt contours} is not specified, the default is significance 5%{p_end}
 
 {syntab :Marking options: conditions}
-{synopt :{opt markcond(condition)}}must contain a condition valid on the active dataset; specifies that points satisfying that condition  should be coloured in {opt colormarkcond} with {helpb marker_options} contained in {opt optionsmarkcond} 
+{synopt :{opt markcond(condition)}}must contain a condition valid on the active dataset; specifies that points satisfying that condition should be coloured in {opt colormarkcond} with {helpb marker_options} and {helpb marker_label_options} contained in {opt optionsmarkcond} 
 and that the legend of this scatter should be {opt legendmarkcond} {p_end}
 {synopt :{opth colormark:cond(colorstyle:color)}}option of {opt markcond} {p_end}
 {synopt :{opt legendmarkcond(string)}}option of {opt markcond} {p_end}

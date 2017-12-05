@@ -8,43 +8,43 @@
 
 *! 1.1 31oct2017 minor bug fixes from funnelcompar rosa gini, silvia forni (based on confunnel by tom palmer and on eclplot by roger newson)
  
-program funnelperform, rclass
+program funnelperform, rclass sortpreserve
 version 9.1
 
 /*set a maximum of 5+1 conditions for superimposing scatters and specifying colors and legends*/
-local maxmarkcond=5
-local markcondi ""
-local colormarkcondi ""
-local legendmarkcondi ""
-local optionsmarkcondi ""
+local maxmarkcond=4
 forv i1=1(1)`maxmarkcond' {
-	local markcondi `"`markcondi' MARKCOND`i1'(string asis)"'
-	local colormarkcondi `"`colormarkcondi' COLORMARKCOND`i1'(string asis)"'
-	local legendmarkcondi `"`legendmarkcondi' LEGENDMARKCOND`i1'(string asis)"'
-	local optionsmarkcondi `"`optionsmarkcondi' OPTIONSMARKCOND`i1'(string asis)"'
+	local markcondi `markcondi' MARKCOND`i1'(string asis)
+	local colormarkcondi `colormarkcondi' COLORMARKCOND`i1'(string asis)
+	local legendmarkcondi `legendmarkcondi' LEGENDMARKCOND`i1'(string asis)
+	local optionsmarkcondi `optionsmarkcondi' OPTIONSMARKCOND`i1'(string asis)
 }
+local defaultReal -1.7e+38
 /*****************/
 /** SYNTAX **/
 /*****************/
-syntax varlist(min=3 max=4) [if] [in], [BINOMial POISson CONTinuous smr ///
-		ext_stand(string) NOWEIght ext_sd(string) EXACt Contours(numlist) CONSTant(string) ///
-		MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) MARKAll MARKTEXTOPtions(string) MARKSCATTEROPTions(string) MARKCOLor(string)  MARKCOND(string asis) COLORMARKcond(string asis) LEGENDMARKCOND(string asis) OPTIONSMARKCOND(string asis) `markcondi' `colormarkcondi' `legendmarkcondi' `optionsmarkcondi' ///
+syntax varlist(min=3 max=4) [if] [in] [iweight/], [BINOMial POISson CONTinuous GAMMA BETA SMR ///
+		ext_stand(real `defaultReal') NOWEIght ext_sd(real `defaultReal') EXACt Contours(numlist) CONSTant(real 1) ///
+		MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) MARKAll MARKTEXTOPtions(string) ///
+		MARKSCATTEROPTions(string) MARKCOLor(string)  MARKCOND(string asis) TRUNC0 ///
+		COLORMARKcond(string asis) LEGENDMARKCOND(string asis) OPTIONSMARKCOND(string asis) ///
+		`markcondi' `colormarkcondi' `legendmarkcondi' `optionsmarkcondi' ///
 		NODRAw VERTical SCATTERCOLor(string) ASPECTratio(string)  CONTCOLor(string) LEGENDCONTour UNITLABel(string) EXTRAplot(string) ///
-		FUNCTIONLOWopts(string) FUNCTIONUPPopts(string) ///
-		LEGENDMORe(string) LEGENDopts(string) ///
-		ONEsided(string) ///
-		SCATTERopts(string) SHADEDContours SOLIDContours STEP TWOWAYopts(string) YTITle(string) XTITle(string) TITle(string) LINECOLor(string) SAVing(string asis) DISPLAYcommand ///
-		EXPORT_instr(string)]
+		FUNCTIONLOWopts(string) FUNCTIONUPPopts(string) LEGENDMORe(string) LEGENDopts(string) ONEsided(string) ///
+		SCATTERopts(string) SHADEDContours SOLIDContours N(integer 100) TWOWAYopts(string) YTITle(passthru) XTITle(passthru) TITle(passthru) LINECOLor(string) ///
+		SAVing(string asis) DISPLAYcommand EXPECT(varname numeric)]
 
-if "`exact'"!=""{
-	version 10.0
-}
 marksample touse,strok
 tokenize `varlist'
 local value `1'   
 local disp `2'
 local unit `3'
 local sdvalue `4'
+foreach v in ext_stand ext_sd{
+	if (``v''==`defaultReal'){
+		local `v' .
+	}
+}
 
 /*
 'value' contains proportions/rates/means -either crude or directly standardised- that are to be plotted; SMRs are considered as rates
@@ -54,7 +54,7 @@ local sdvalue `4'
 */
 
 /*OPTIONS*
--BINOMial POISson CONTinuous- only one of those options are possible and at least one is mandatory: they specify whether the routine expect to process proportions, rates or means 
+-BINOMial POISson CONTinuous GAMMA- only one of those options are possible and at least one is mandatory: they specify whether the routine expect to process proportions, rates or means 
 -ext_stand(string) ext_sd(string)- specify external references; if they are not specified references are computed from the data 
 -smr- specifies that rates are to be considered as indirectly standardised
 -NOWEIght- if references are computed form the data, noweiht tells not to weight the data before computing reference values
@@ -69,7 +69,7 @@ local sdvalue `4'
 -MARKAll - marks all points with their labels or values
 -MARKCOND(string asis) COLORMARKCOND(string asis) LEGENDMARKCOND(string asis)- marks points accoprding to some conditions on data (up to 6 conditions are available of the form markcond(), markcond1(), markcond2()... )
 -MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string)- marks point upper/lower the contour at -markcontour- confidence level
--STEP- set the granularity at which the contour lines are computed; a default is computed from the data
+// deprecated - mirror twoway function n option instead -STEP- set the granularity at which the contour lines are computed; a default is computed from the data
 -SAVing(string asis)- saves the dataset that generates the curves
 -DISPLAYcommand- makes the routine display the command that generates the graph
 -LINECOLor(string)- is the color of the reference line
@@ -83,24 +83,17 @@ in particular the string in -twowayopts- is placed at the end of the graph comma
 /*****************/
 /** ERRORS **/
 /*****************/
-
-if "`binomial'"=="" & "`poisson'"=="" & "`continuous'"==""{
-	di as error "You must specify -binomial- or -poisson- or -continuous-." 
+local namedistr = trim("`poisson' `binomial' `gamma' `continuous' `beta'")
+if "`namedistr'"==""{
+	di as error "You must specify -binomial- or -poisson- or -continuous- or -gamma- or -beta-." 
 	di as error "If -binomial- is specified, then data are considered to be proportions arising from a binomial distribution" 
 	di as error "If -poisson- is specified, then data are considered to be rates arising from a poisson distribution or SMR"
 	di as error "If -continuous- is specified, then data considered to be means arising from a normal distribution"
 	error 198
 }
-local options "binomial poisson continuous"
-foreach opt of local options{ 
-	if "``opt''"!=""{
-		foreach othopt of local options{
-			if "``othopt''"!="" & "`opt'"!="`othopt'" {
-				di as error "Only one option between -binomial-, -poisson- and -continuous- might be specified, while you specified both -`opt'- and -`othopt'-"
-				error 198
-			}
-		}
-	}
+if (wordcount("`namedistr'")>1){
+	di as error "Only one option between -binomial-, -poisson-, -gamma-, -beta- and -continuous- may be specified"
+	error 198
 }
 if "`sdvalue'"!="" &"`continuous'"==""{
 	di as error "The fourth variable of the command '`sdvalue'' should only be specified when -continuous- option is also specified"
@@ -108,41 +101,57 @@ if "`sdvalue'"!="" &"`continuous'"==""{
 	di as error "Recall that -continuous- must specified if data contained in '`value'' are means arising from a normal distribution"
 	error 198
 }
-if "`smr'"!="" &"`poisson'"==""{
+if "`smr'"!="" & !inlist("`namedistr'","poisson","gamma","beta"){
 	di as error "Option -smr- implies that option -poisson- must be specified "
 	error 198
 }
-if "`ext_stand'"!="" &"`noweight'"!=""{
+if `ext_stand'==. &"`noweight'"!=""{
 	di as error "Option -ext_stand- is incompatible with -noweight- option,"
 	di as error "since -ext_stand- assumes that the data are to be compared against and external standard "
 	di as error "whereas -noweight- assumes that the data are to be compared against the internal noweighted mean"
 	error 198
 }
-if "`ext_sd'"!="" & "`continuous'"=="" {
+if `ext_sd'!=. & "`continuous'"=="" {
 	di as error "Option -ext_sd- only might be specified if the -continuous- option is specified,"
 	di as error "and only in case the data are considered to be means arising from a normal distribution "
 	di as error "and one wants to compare them against a standand mean with external standard deviation -ext_sd-"
 	error 198
 }
-if "`sdvalue'"=="" & "`ext_sd'"==""&"`continuous'"!=""{
+if "`sdvalue'"=="" & `ext_sd'==. & "`continuous'"!=""{
 	di as error "When the -continuous- option is specified either a fourth variable or the external standard deviation -ext_sd- option should be specified"
 	di as error "in order to let the program decide which reference standard deviation should be assumed"
 	error 198
 }
-if "`sdvalue'"!="" & "`ext_sd'"!=""{
+if "`sdvalue'"!="" & `ext_sd'!=.{
 	di as error "You specified both variable '`sdvalue'' and the external standard deviation -ext_sd- option"
 	di as error "You should decide whether the reference standard deviation should be computed from the data contained in '`sdvalue''"
 	di as error "or the program should assume the number `ext_sd' as reference standard deviation"
 	error 198
 }
-if "`smr'"!="" & ("`ext_stand'"!="" |"`noweight'"!="") {
+if "`smr'"!="" & (`ext_stand'!=. |"`noweight'"!="") {
 	di as error "Option 'smr' only might be specified in case of indirectly standardised rates "
 	di as error "and in this case neither 'ext_stand' nor 'noweight' might be specified"
 	di as error "since the external standard is fixed to the expected rate"
 	error 198
 }
-if "`exact'"!="" & "`continuous'"!=""{
-	di as error "Option 'exact' does not apply to the 'continuous' case"
+if inlist("`namedistr'","gamma","beta") & "`smr'"==""{
+	di as error "Currently the gamma (incomplete gamma (ratio)) and beta functions only apply to standardised (observed/expected) rates. Please specify SMR"
+	error 198
+}
+if "`gamma'"!="" & !inlist(`ext_stand',.,1){
+	di as error "The external standard must be 1 if the gamma option is specified"
+	error 198
+}
+if "`beta'"!="" & "`expect'"=="" & "`weight'"==""{
+	di as error "if the beta option is specified the variable representing the total number of expected failures per unit (expect) or the population size (iweight) is also required"
+	error 198
+}
+if "`beta'"=="" & "`expect'"!="" {
+	di as error "The total number of expected failures per unit (expect) is only applicable when specifying the beta distribution"
+	error 198
+}
+if "`exact'"!="" & !inlist("`namedistr'","poisson","binomial"){
+	di as error "Option 'exact' can only be applied to the poisson and binomial distributions"
 	error 198
 }
 if "`onesided'" != "" & "`onesided'" != "lower" & "`onesided'" != "upper" {
@@ -172,7 +181,7 @@ forv i1=0(1)`maxmarkcond' {
 	}
 }
 if "`contours'" == "" { // default significance contours
-	local contours "5 .2"
+	local contours "95 99.8"
 }
 if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `markcontour' is one of the contours	
 	local nmarkcont = wordcount("`markcontour'")
@@ -183,16 +192,29 @@ if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `ma
 	if subinword("`contours'","`markcontour'","",1)=="`contours'"{
 		di as error `"Option -markcontour- contains the string "`markcontour'" which is not one of the contours `contours' that you asked to compute"'
 		error 198
-	}
+	}	
 }
+
+confirm numeric variable `value'  
+confirm numeric variable `disp'
+if ("`sdvalue'"!=""){
+	confirm numeric variable `sdvalue'
+}
+
 /*****************/
 /** DEFAULTS **/
 /*****************/
 
-local namedistr=cond("`binomial'"!="","binomial",cond("`poisson'"!="","Poisson","normal"))
-if "`constant'"==""{
-	local constant "1"
+if (inlist("`namedistr'","gamma","beta")){
+	if ("`smr'"!="") {
+		local ext_stand 1
+	}
 }
+
+if ("`beta'" != ""){ //a bit of a 'hack - uses similar loggic to the exact methods, even though it is not one
+	local exact exact
+}
+
 if "`unitlabel'"==""{
 	local labelunit:variable label `unit'
 	if "`labelunit'"!=""{
@@ -232,9 +254,9 @@ if "`solidcontours'" == "solidcontours" { // use dashed or solid contours
 else if "`solidcontours'" == "" {
 	local linepatt "longdash dash shortdash dot shortdash_dot dash_dot longdash_dot" // line pattern styles for the contours
 }
-local n 0
+local j 0
 foreach lp in `linepatt' {
-	local lp`++n' `lp'
+	local lp`++j' `lp'
 }
 
 forvalues j = 1/`ncontours' { // shades for shaded contours
@@ -259,457 +281,292 @@ if "`aspectratio'" != "" { // default aspectratio
 	local aspectratio "aspectratio(`aspectratio')"
 }
 if "`linecolor'" == "" { // default color for reference line
-	local linecolor "red" 
+	local linecolor red
 }
 if `"`markup'"'!="" & "`markupcolor'"==""{ //default for marking points upper the contour
-	local markupcolor "orange"
+	local markupcolor orange
 }
 if `"`marklow'"'!="" & "`marklowcolor'"==""{ //default for marking points lower the contour
-	local marklowcolor "blue"
+	local marklowcolor blue
 }
+if "`markcolor'"==""{
+	local markcolor black
+}
+if ("`colormarkcond'"=="") {
+	local colormarkcond red
+}
+
 /*AUXILIARY LOCAL MACROS*/
-local plusu="+"
-local plusl="-"
-	
+local plusub +
+local pluslb -
 /*****************/
 /** ANALYSIS **/
 /*****************/
 /*set the value of the standard according to the options*/
-qui {
-	if "`ext_stand'"==""{
-		if "`smr'"!=""{
-			local ext_stand="`constant'"
-		}
-		else{
-			if "`noweight'"==""{
-				su `value' [fw= `disp'] if  `touse',meanonly
+local obs=_N
+//capture{
+	//qui{
+		if `ext_stand'==.{
+			if "`smr'"!=""{
+				local ext_stand `constant'
 			}
 			else{
-				su `value' if  `touse',meanonly
-			}
-			local ext_stand=string(r(mean))
-		}
-	}
-	if "`binomial'"!=""{
-		local ext_sd=string(sqrt(`ext_stand'*(`constant'-`ext_stand')))
-	}
-	if "`poisson'"!=""{
-		local ext_sd=string(sqrt(`ext_stand')*sqrt(`constant'))
-	}
-	if "`ext_sd'"=="" & "`continuous'"!=""{
-		tempvar variance
-		gen `variance'=`sdvalue'^2
-		if "`noweight'"==""{
-			su `variance' [fw= `disp'] if `touse',meanonly
-		}
-		else{
-			su `variance' if `touse',meanonly
-		}
-		local ext_sd=string(sqrt(r(mean)))
-	}
-	/*generate the dataset of the reference curves*/
-	tempvar _funnel `y'var
-	gen ``y'var' = `disp'
-	gen byte `_funnel'=`touse'==1
-	tempfile dataset
-	save `dataset'
-	if "`exact'"==""{
-		foreach c in `contours' {
-			local z = invnorm(1-`number`c''/(200))
-			tempvar _ub`c' _lb`c'
-			gen `_ub`c''=`ext_stand' + `z'*`ext_sd'/sqrt(``y'var') if  `touse' 
-			gen `_lb`c''=`ext_stand' - `z'*`ext_sd'/sqrt(``y'var') if  `touse' 
-		}
-	}
-	else{
-		su ``y'var' if `touse', meanonly
-		if "`step'"==""{
-			local step=max(round(ceil((r(max)-r(min))/10),10),1)
-		}
-		local `y'max = ceil(r(max)+`step'/10)
-		local `y'min =max(1,floor(r(min)-`step'/10))
-		local obs=ceil((``y'max'-``y'min'+1)/`step')+1
-		clear
-		set obs `obs'
-		gen ``y'var'=(_n-1)*`step'+``y'min' 
-		drop if ``y'var'<2
-		append using `dataset'
-		replace `_funnel'=2 if mi(`_funnel')
-		foreach c in `contours' {
-			preserve
-			contract ``y'var'
-	// 		gen _obs1=int(`ext_stand'* ``y'var'/`constant')
-			if "`binomial'"!=""{
-				foreach lim in u l{
-					local theta=`ext_stand'/`constant'
-					local lev`lim'=cond("`lim'"=="l",`number`c''/200,1-`number`c''/200)
-					
-					gen rp`lim' = .
-					mata: x = .
-					mata: st_view(x, ., ("``y'var'"))
-					local obs=_N
-					forvalues i = 1(1)`obs'{
-						scalar scalar_i = `i'
-						mata: i = st_numscalar("scalar_i")
-						mata: invbinom2(x[i], `theta',`lev`lim'' )
-						replace rp`lim' = r(rp) in `i'
-					}
-					gen rp`lim'm1=rp`lim'-1
-					gen _`lim'b`c'=``y'var'^(-1)*(rp`lim'-((binomial(``y'var',rp`lim',`theta')-`lev`lim'')/(binomial(``y'var',rp`lim',`theta')-binomial(``y'var',rp`lim'm1,`theta'))))
-					gen _`lim'b`c'app=`theta' `plus`lim'' invnorm(1-`number`c''/200)*sqrt(``y'var'^(-1)*((`theta'*(1-`theta'))))
-					foreach var of varlist _`lim'b`c' _`lim'b`c'app {
-						replace `var'=0 if `var'<0
-						replace `var'=1 if `var'>1
-					}
-				}
-			}
-			if "`poisson'"!=""{
-				foreach lim in u l{
-					local theta=`ext_stand'/`constant'
-					local lev`lim'=cond("`lim'"=="l",`number`c''/200,1-`number`c''/200)
-					
-					gen rp`lim' = .
-					mata: x = .
-					mata: st_view(x, ., ("``y'var'"))
-					local obs=_N
-					forvalues i = 1(1)`obs'{
-						scalar scalar_i = `i'
-						mata: i = st_numscalar("scalar_i")
-						mata: invpoisson2(x[i], `theta',`lev`lim'' )
-						replace rp`lim' = r(rp) in `i'
-					}
-					gen rp`lim'm1=rp`lim'-1
-					gen _`lim'b`c'=``y'var'^(-1)*(rp`lim'-((poisson(`theta'*``y'var',rp`lim')-`lev`lim'')/(poisson(`theta'*``y'var',rp`lim')-poisson(`theta'*``y'var',rp`lim'm1))))
-					gen _`lim'b`c'app=`theta' `plus`lim'' invnorm(1-`number`c''/200)*sqrt(``y'var'^(-1)*(`theta'))
-					foreach var of varlist _`lim'b`c' _`lim'b`c'app {
-						replace `var'=0 if `var'<0
-					}
-				}
-			}
-			foreach lim in u l{
-				foreach var of varlist _`lim'b`c' _`lim'b`c'app {
-					replace `var'= `var'*`constant' 
-				}
-				label variable _`lim'b`c' `"`lim'b for variable `value' at confidence level `lev' assuming `namedistr' distribution"'
-			}
-			keep ``y'var' _u* _l*
-			sort ``y'var'
-			tempfile `c'file
-			save ``c'file'
-			restore
-			sort ``y'var'
-			merge ``y'var' using ``c'file', update
-			drop _merge
-		}
-	}
-	if `"`saving'"'!=""{
-		preserve
-		local namefile=cond(strmatch(`"`saving'"',"*.dta")==1,`"`saving'"',`"`saving'.dta"')
-		if ("`binomial'"!=""| "`poisson'"!=""){
-			local methodcurves=cond("`exact'"=="","normal approximation","exact method")
-		}
-		else{
-			local methodcurves ""
-		}
-		label data "Dataset for funnel plot (see characheristics with -char list-)"
-		label variable `_funnel' "Instruction for funnel"
-		label define funnel_label 0 "Not to use" 1 "Points for scatter" 2 "Points for curves"
-		label values `_funnel' funnel_label
-		local target_val `"`ext_stand'"'
-		local target_sd `"`ext_sd'"'
-		foreach char in namedistr target_val target_sd methodcurves{
-			char define _dta[`char'] `"``char''"'
-		}
-		save `namefile',replace
-		di in ye `"File for funnel plot generation was saved in `namefile'"'
-		restore
-	}
-	// export instructions (non documented)
-	if "`export_instr'"!=""{
-		di in ye "export_instr"
-		use `namefile',clear
-		count if `_funnel'==2
-		if `r(N)'==0{
-			su ``y'var' if `touse', meanonly
-			if "`step'"==""{
-				local step=max(round(ceil((r(max)-r(min))/10),10),1)
-			}
-			local `y'max = ceil(r(max)+`step'/10)
-			local `y'min =max(1,floor(r(min)-`step'/10))
-			local obs=ceil((``y'max'-``y'min'+1)/`step')+1
-			clear
-			set obs `obs'
-			gen ``y'var'=(_n-1)*`step'+``y'min' 
-			drop if ``y'var'<2
-			append using `namefile'
-			replace `_funnel'=2 if mi(`_funnel')
-			foreach c in `contours' {
-				local z=invnorm(1-`number`c''/200)
-				replace `_ub`c''=`ext_stand' + `z'*`ext_sd'/sqrt(``y'var') if  `touse' |`_funnel'==2
-				replace `_lb`c''=`ext_stand' - `z'*`ext_sd'/sqrt(``y'var') if  `touse' |`_funnel'==2
-			}
-		}
-		gen group=""
-		gen symbol=""
-		gen color="black"
-		forv i1=0(1)`maxmarkcond' {
-			local i=cond(`i1'==0,"","`i1'")
-			if `"`markcond`i''"'!=""{
-				replace group="`i1'" if `markcond`i'' & `_funnel'==1
-				foreach symbol in circle diamond triangle square plus x{
-					replace symbol="`symbol'" if  strmatch("`optionsmarkcond`i''","*`symbol'*") & group=="`i1'" 
-				}
-				if `"`colormarkcond`i''"'!=""{
-					replace color="`colormarkcond`i''" if group=="`i1'" 
-				}
-			}
-		}
-		tempfile scatterpoints
-		preserve
-		keep if `_funnel'==1
-		save `scatterpoints'
-		restore 
-		
-		keep if `_funnel'==2
-		keep  ``y'var'  _*
-		foreach c in `contours' {
-			gen `value'ub`c' = `_ub`c'' 
-			gen `value'lb`c' = `_lb`c''
-		}
-		gen `value'ref=`ext_stand'
-		reshape long `value',i(``y'var' `_funnel') j(id_curve)  string
-		append using `scatterpoints'
-		gen x = ``y'var'
-		gen y = `value'
-		gen _funnel = `_funnel'
-		keep x y `unit' _funnel id_curve color symbol
-		order x y `unit' _funnel id_curve color symbol
-		save `export_instr',replace
-		use `namefile',clear
-	}
-	/**********************/
-	/** GRAPH GENERATION **/
-	/**********************/
-	di in ye "Starting plotting the graph"
-	//arguments in the correct order according to graph to be plotted vertical or horizontal
-	local args=cond("`vertical'"!="","``y'var' `value'","`value' ``y'var' " )
-
-	//CONTOURS
-	// legend for contours
-	local i 1 
-	foreach c in `contours' {
-		local i = `i' + 1
-		local h = `i' - 1
-		if "`onesided'" == "lower" {
-			local lub`c' "lc(none)"
-			local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
-			local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
-		}
-		else if "`onesided'" == "upper" {
-			local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
-			local llb`c' "lc(none)"
-			local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
-		}
-		else{
-			local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
-			local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
-			local contourlabels`c' `"`=2*`h'' "Sign. `number`c''%""'
-		}
-	}
-	//command for contours
-	foreach c in `contours'{
-		foreach lim in u l{
-			if "`exact'"==""{
-				sum ``y'var' if `touse'
-				local range "`r(min)' `r(max)'"
-				local invnorm=invnorm(1-`number`c''/200)
-				local args`lim'=cond("`vertical'"!=""," horizontal","" )
-				local function `"`function' function `ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x) , range(`range') `l`lim'b`c'' `args`lim''  || "'
-			}
-			else{
-				local args`lim'=cond("`vertical'"!="","``y'var' _`lim'b`c'","_`lim'b`c' ``y'var' " )
-				local function `"`function' line `args`lim'' , sort `l`lim'b`c'' || "'
-			}
-		}
-		local contourlabels `"`contourlabels' `contourlabels`c''"'
-	}
-	//POINTS
-	//marks units specified in -markunits- or -markall- options
-	if (`"`markunits'"'!="" | "`markall'"!=""){
-		if `"`markunits'"'!=""{
-			local tokens `"`markunits'"'
-			local j=1
-			gettoken `j' tokens: tokens,quotes
-			local k=1
-			while (`"``j''"'!=""){
-				if strmatch(`"``j''"',`"`"*"'"')==0{
-					local val`k' `"``j''"'
-					local k=`k'+1
+				if "`noweight'"==""{
+					qui su `value' [fw= `disp'] if  `touse',meanonly
 				}
 				else{
-					local km=`k'-1
-					if `"`lab`km''"'==""{
-						local lab`km' ``j''
-					}
+					qui su `value' if  `touse',meanonly
 				}
-				local j=`j'+1
-				gettoken `j' tokens: tokens,quotes
+				local ext_stand=r(mean)
 			}
-			local maxval=`k'-1
-			if "`markcolor'"==""{
-				local markcolor "red"
+		}
+		if "`binomial'"!=""{
+			local ext_sd=sqrt(`ext_stand'*(`constant'-`ext_stand'))
+		}
+		if "`poisson'"!=""{
+			local ext_sd=sqrt(`ext_stand')*sqrt(`constant')
+		}
+		if `ext_sd'==. & "`continuous'"!=""{
+			tempvar variance
+			gen float `variance'=`sdvalue'^2
+			if "`noweight'"==""{
+				qui su `variance' [fw= `disp'] if `touse',meanonly
+			}
+			else{
+				qui su `variance' if `touse',meanonly
+			}
+			local ext_sd=sqrt(r(mean))
+		}
+
+		/*generate the dataset of the reference curves*/
+		tempvar _funnel `y'var
+		gen byte `_funnel'=`touse'==1
+
+		if "`exact'"==""{
+			foreach c in `contours' {
+				tempvar ub`c' lb`c'
+				if ("`gamma'"!=""){
+					gen float `ub`c''= invgammap(`disp'+1,(100+`number`c'')/200)/`disp' if `touse' 
+					gen float `lb`c''= invgammap(`disp',(100-`number`c'')/200)/`disp' if `touse'
+				}
+				else {
+					local z = invnorm((100+`number`c'')/200)
+					gen float `ub`c''=`ext_stand' + `z'*`ext_sd'/sqrt(`disp') if `touse' 
+					gen float `lb`c''=`ext_stand' - `z'*`ext_sd'/sqrt(`disp') if `touse'
+				}
 			}
 		}
 		else{
-			levelsof `unit' ,local(unitvalues) clean
-			local maxval: word count `unitvalues'
-			tokenize `unitvalues'
-			forvalues k=1/`maxval'{
-				local val`k' `"``k''"'
+			if ("`beta'"==""){
+				su `disp' if `touse', meanonly
+				local ymin `r(min)'
+				local ymax `r(max)'
+				local steps = `ymax'-`ymin' + 1 
+				local step = ceil(`steps'/`n')
+				local n = ceil(`steps'/`step')
+
+				set obs `=`obs' + `n''
+				replace `touse' = 1 in `=`obs'+1'/l
+				replace `disp'=(_n-`obs')*`step'+`ymin' in `=`obs'+1'/l 
+				replace `_funnel'=2 in `=`obs'+1'/l 
 			}
-			if "`markcolor'"==""{
-				local markcolor "`scattercolor'"
+			sort `disp'
+			foreach c in `contours' {
+				tempvar ub`c' lb`c'
+				gen float `lb`c'' = . 
+				gen float `ub`c'' = .
+				if "`binomial'"!=""{
+					local theta=`ext_stand'/`constant'
+					mata: getInvbinom2("`disp'","`touse'", "`lb`c''", "`ub`c''", `theta',`number`c'')
+				}
+				else if "`poisson'"!=""{
+					local theta=`ext_stand'/`constant'
+					mata: getInvpoisson2("`disp'","`touse'", "`lb`c''", "`ub`c''", `theta',`number`c'')
+				}
+				else if ("`beta'"!=""){ //the beta logic is not really 'exact' to my way of thinking, but the logical method of creating interpolated results for the CIs is the same
+					mata: getBeta2("`exp'","`disp'","`touse'", "`lb`c''", "`ub`c''", `number`c'')
+				}
+				foreach lim in ub lb{
+					replace ``lim'`c''= ``lim'`c''*`constant' 
+					label variable ``lim'`c'' `"`lim' for variable `value' at confidence level `lev' assuming `namedistr' distribution"'
+				}
 			}
 		}
-		capture confirm string variable `unit'
-			if _rc==0{
-				local unitstring "1"
-			}
-		if "`markcolor'"!= `"`scattercolor'"'| "`markscatteroptions'"!=""{
-			local markscatter ""
-			forvalues k=1/`maxval'{
-				local ifunit=cond("`unitstring'"=="1",`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
-				if "`markscatteroptions'"==""{
-					local markscatteroptions `"`scatteropts'"'
-				}
-				count if `touse' & `ifunit'
-				if `r(N)'>0{
-					local markscatter `"`markscatter' scatter `args' if `ifunit',mc(`markcolor') `markscatteroptions' ||"'
-				}
-			}
-		}
-		local marktext ""
-		forvalues k=1/`maxval'{
-			local ifunit=cond("`unitstring'"=="1" ,`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
-			count if `ifunit' & `touse'
-			if `r(N)'==0{
-				di as err `"no observations satisfy condition `ifunit'"'
+		if `"`saving'"'!=""{
+			preserve
+			local namefile=cond(strmatch(`"`saving'"',"*.dta")==1,`"`saving'"',`"`saving'.dta"')
+			if ("`binomial'"!=""| "`poisson'"!=""){
+				local methodcurves=cond("`exact'"=="","normal approximation","exact method")
 			}
 			else{
-				local xvar= word("`args'",2)
-				local yvar= word("`args'",1)
-				foreach coord in x y {
-					levelsof ``coord'var' if `ifunit' & `touse',local(`coord'`k') clean
-				}
-				if `"`lab`k''"'==""{
-					if "`unitstring'"!="1"{
-						local lab`k': label  (`unit') `val`k''
-					}
-					else{
-						local lab`k' `"`val`k''"'
-					}
-				}
-				if `"`marktextoptions'"'==""{
-					local marktextoptions `"placement(ne)"'
-				}
-				local marktext `"`marktext' text(`y`k'' `x`k''  `"`lab`k''"', color(`markcolor') `marktextoptions')"'
+				local methodcurves ""
+			}
+			label data "Dataset for funnel plot (see characheristics with -char list-)"
+			label variable `_funnel' "Instruction for funnel"
+			label define funnel_label 0 "Not to use" 1 "Points for scatter" 2 "Points for curves"
+			label values `_funnel' funnel_label
+			local target_val `ext_stand'
+			local target_sd `ext_sd'
+			foreach char in namedistr target_val target_sd methodcurves{
+				char define _dta[`char'] `"``char''"'
+			}
+			save `namefile',replace
+			di in ye `"File for funnel plot generation was saved in `namefile'"'
+			restore
+		}
+		/**********************/
+		/** GRAPH GENERATION **/
+		/**********************/
+		di in ye "Starting plotting the graph"
+		//arguments in the correct order according to graph to be plotted vertical or horizontal
+		local scatterargs=cond("`vertical'"!="","`disp' `value'","`value' `disp' " )
+
+		//CONTOURS
+		// legend for contours
+		local i 1 
+
+		foreach c in `contours' {
+			local i = `i' + 1
+			local h = `i' - 1
+			if "`onesided'" == "lower" {
+				local lub`c' "lc(none)"
+				local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
+				local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
+			}
+			else if "`onesided'" == "upper" {
+				local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
+				local llb`c' "lc(none)"
+				local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
+			}
+			else{
+				local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
+				local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
+				local contourlabels`c' `"`=2*`h'' "Sign. `number`c''%""'
 			}
 		}
-	}
-	//marks units upper and/or lower the contour
-	foreach lev in up low{
-		if `"`mark`lev''"'!=""{
-			local if`lev'=cond("`lev'"=="up", `"`value'>`_ub`markcontour'' & `touse'"',`"`value'<`_lb`markcontour'' & `touse'"' )
-			levelsof `unit' if `if`lev'' & `touse' ,local(unitvalues`lev') clean
-			local maxval`lev': word count `unitvalues`lev''
-			tokenize `unitvalues`lev''
-			forvalues k=1/`maxval`lev''{
-				local val`k' `"``k''"'
-			}
-			capture confirm string variable `unit'
-				if _rc==0{
-					local unitstring=1
+		//command for contours
+		sum `disp' if `touse', meanonly
+		local range `r(min)' `r(max)'
+		foreach c in `contours'{
+			local invnorm = invnorm((100+`number`c'')/200)
+			foreach lim in ub lb{
+				if "`exact'"==""{
+					local functionArgs range(`range') n(`n') `l`lim'`c'' `contourargs' 
+					if ("`gamma'" == ""){
+						local contourargs=cond("`vertical'"!=""," horizontal","")
+						local singlecontour `ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x)
+						if ("`trunc0'"!="" && "`lim'"=="lb"){
+							local singlecontour max(`singlecontour',0)
+						}
+						local function `function' function `singlecontour', `functionArgs' ||
+					}
+					else if ("`lim'"=="ub") {
+						local function `function' function invgammap(x+1,(100+`number`c'')/200)/x, `functionArgs' || function invgammap(x,(100-`number`c'')/200)/x, `functionArgs' ||
+					}
 				}
-			if "`mark`lev'color'"!= `"`scattercolor'"'!{
-				local mark`lev'scatter ""
+				else{
+					local contourargs=cond("`vertical'"!="","`disp' ``lim'`c''","``lim'`c'' `disp'" )
+					local function `function' line `contourargs', `l`lim'`c'' || 
+				}
+			}
+			local contourlabels `"`contourlabels' `contourlabels`c''"'
+		}
+		
+		//POINTS
+		//marks units specified in -markunits- or -markall- options
+		tempvar marker 
+		gen byte `marker' = 1 
+		
+		if (`"`markunits'"'!="") {
+			local ++maxmarkcond
+			capture confirm numeric variable `unit'
+			if (_rc==0) {
+				local markunits = subinstr("`markunits'", " ", ",", .)
+			}
+			else {
+				local markunits = `"""' + subinstr(`"`markunits'"', " ", `"",""', .) + `"""'
+			}
+			local markcond`maxmarkcond' inlist(`unit',`markunits')
+		}
+		if("`markall'"!="") {
+			local mainscatteropts mlabel(`unit') `scatteropts'
+		}
+		
+		forv i=1(1)`maxmarkcond' {
+			if `"`markcond`i''"'!=""{
+				if "`optionsmarkcond`i''"==""{
+					local optionsmarkcond`i' `"`scatteropts' `optionsmarkcond'"'
+				}
+				if ("`colormarkcond`i''"==""){
+					local colormarkcond`i' `colormarkcond'
+				}
+				replace `marker' = 3 + `i' if `_funnel'==1 & `markcond`i''
+				local markconditions `markconditions' scatter `scatterargs' if `marker' == 3 + `i' ,mc(`colormarkcond`i'') `optionsmarkcond`i'' mlabel(`unit') mlabcolor(`colormarkcond`i'') ||
+			}
+		}
+		
+		//marks units upper and/or lower the contour
+		foreach lev in up low{
+			if `"`mark`lev''"'!=""{
+				if ("`lev'"=="up"){
+					replace `marker' = 2 if `_funnel'==1 & `value' > `ub`markcontour''
+					local ifstate `marker' == 2
+				} 
+				else {
+					replace `marker' = 3 if `_funnel'==1 & `value' < `lb`markcontour''
+					local ifstate `marker' == 3
+				}
 				if "`markscatter`lev'options'"==""{
-					local markscatter`lev'options `"`scatteropts'"'
+					local markscatter`lev'options `scatteropts'
 				}
-				local mark`lev'scatter `"`mark`lev'scatter' scatter `args' if `if`lev'',mc(`mark`lev'color') `markscatter`lev'options' ||"'
-			}
-			local mark`lev'text ""
-			forvalues k=1/`maxval`lev''{
-				local ifunit=cond("`unitstring'"=="1" ,`"`unit'=="`val`k''""',`"`unit'==`val`k''"')
-				local xvar= word("`args'",2)
-				local yvar= word("`args'",1)
-				foreach coord in x y {
-					levelsof ``coord'var' if `ifunit' & `touse' ,local(`coord'`k') clean
-				}
-				if `"`lab`k''"'==""{
-					if "`unitstring'"!="1"{
-						local lab`lev'`k': label  (`unit') `val`k''
-					}
-					else{
-						local lab`lev'`k' `"`val`k''"'
-					}
-				}
-				if `"`marktextoptions`lev''"'==""{
-					local marktextoptions`lev' `"placement(ne)"'
-				}
-				local mark`lev'text `"`mark`lev'text' text(`y`k'' `x`k''  `"`lab`lev'`k''"', color(`mark`lev'color') `marktextoptions`lev'')"'
+				local mark`lev'scatter `mark`lev'scatter' scatter `scatterargs' if `ifstate', mc(`mark`lev'color') `markscatter`lev'options' mlabel(`unit') mlabcolor(`mark`lev'color') ||
 			}
 		}
-	}
-}
-//mark conditions specified in the -markcond`i'- options
-local markconditions ""
-forv i1=0(1)`maxmarkcond' {
-	local i=cond(`i1'==0,"","`i1'")
-	if `"`markcond`i''"'!=""{
-		if "`optionsmarkcond`i''"==""{
-			local optionsmarkcond`i' `"`scatteropts'"'
+	//}
+	//end qui
+
+	// LEGEND
+	if "`legendopts'" != "off" {
+		// position and other options
+		if "`legendopts'" == "" { // default legend options
+			local legendopts "ring(0) pos(2) size(small) symxsize(*.4) cols(1)"
 		}
-		local markconditions `"`markconditions' scatter `args' if `touse' & `markcond`i'',mc(`colormarkcond`i'') `optionsmarkcond`i'' ||"'
-	}
-}
-// LEGEND
-if "`legendopts'" != "off" {
-	// position and other options
-	if "`legendopts'" == "" { // default legend options
-		local legendopts "ring(0) pos(2) size(small) symxsize(*.4) cols(1)"
-	}
-	//legend of units
-	local legendtot `"order( `=2*`ncontours' + 1' `"`unitlabel'"' "'
-	//legend of conditions
-	forv i1=0(1)`maxmarkcond' {
-		local i=cond(`i1'==0,"","`i1'")
-		local ip=`i1'+1
-		if `"`markcond`i''"'!="" &`"`legendmarkcond`i''"'!=""{
-			local legendtot `"`legendtot' `=2*`ncontours' +1+`ip'' `"`legendmarkcond`i''"' "'
+		//legend of units
+		local legendtot `"order( 1 `"`unitlabel'"' "'
+		//legend of conditions
+		forv i1=0(1)`maxmarkcond' {
+			local i=cond(`i1'==0,"","`i1'")
+			local ip=`i1'+1
+			if `"`markcond`i''"'!="" &`"`legendmarkcond`i''"'!=""{
+				local legendtot `"`legendtot' `=2*`ncontours' +1+`ip'' `"`legendmarkcond`i''"' "'
+			}
 		}
+		//legend of contours
+		if "`legendcontour'"!=""{
+			local legendtot `"`legendtot'  `contourlabels' "'
+		}
+		local legendtot `"`legendtot' `legendmore') `legendopts'"'
 	}
-	//legend of contours
-	if "`legendcontour'"!=""{
-		local legendtot `"`legendtot'  `contourlabels' "'
+	else{
+		local legendtot `"off"'
 	}
-	local legendtot `"`legendtot' `legendmore') `legendopts'"'
-}
-else{
-	local legendtot `"off"'
-}
-// ACTUAL GENERATION OF GRAPH
-local graph_command `"twoway  `function' scatter `args' if `touse' & `_funnel'==1, mc(`scattercolor') `scatteropts' || `markconditions' `markscatter'  `markupscatter' `marklowscatter' `extraplot' , `x'line(`ext_stand',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal))  xtitle(`"`xtitle'"') ytitle(`"`ytitle'"') title(`"`title'"')    legend(`legendtot')  `marktext' `markuptext' `marklowtext' `twowayopts'"'
-if "`displaycommand'"!=""{
-	di in ye `"`graph_command'"'
-}
-if "`nodraw'"==""{
-	`graph_command'
-}
-use `dataset',clear
+	// ACTUAL GENERATION OF GRAPH
+	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`ext_stand',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
+	if "`displaycommand'"!=""{
+		di in ye `"`graph_command'"'
+	}
+	if "`nodraw'"==""{
+		`graph_command'
+	}
+/*}
+if _rc!=0 {
+	error _rc
+}*/
+drop if `_funnel'==2
 
 // RETURNED RESULTS
-return local target_val `"`ext_stand'"'
-return local target_sd `"`ext_sd'"'
+return local target_val "`ext_stand'"
+return local target_sd "`ext_sd'"
 return local graph_command `"`graph_command'"'
 
 end
@@ -719,21 +576,94 @@ end
 /***************************/
 
 mata:
-function invbinom2(n, theta, p){
-	i=0
-	do {
-		F = binomial(n, i,theta)
-		if  (F >= p) {
-		st_numscalar("r(rp)", i)
-			return(i)
-		}
-		i++
-	} while (i<=n)
+mata set matastrict on
+
+class interpolResult {
+	public real matrix counts, weights
 }
 
-function invpoisson2(n,theta, p){
-	expected=theta*n
-	i=0
+class interpolResult stepSearch(real scalar theta, real scalar ci, real colvector pop, pointer(real scalar function) delegate){
+real scalar x,n,len,F,found,target,priorF,i;
+class interpolResult scalar returnVar;
+	len = rows(pop);
+	returnVar.counts=J(len,2,.);
+	returnVar.weights=J(len,2,.);
+	target = (100-ci)/200;
+	x=0;
+	//find lower bounds of first part of graph
+	for(i=1;i<=2;i++) {
+		if(i==2){ 
+			x = returnVar.counts[1,1];
+			target = 1-target;
+		}
+		for(n=1;n<=len;n++){
+			priorF=.;
+			found=0;
+			do {
+				F = (*delegate)(pop[n], x,theta);
+				if (F>=target){
+					if (x==0){
+						returnVar.counts[n,i] = x = 0;
+						returnVar.weights[n,i] = 1;
+					} 
+					else {
+						returnVar.counts[n,i]= x;
+						if (priorF==.){
+							priorF = (*delegate)(pop[n], x-1,theta);
+						}
+						returnVar.weights[n,i] = (F-target)/(F-priorF);
+					}
+					found=-1;
+				}
+				else {
+					x++;
+					priorF=F;
+				}
+			} while (!found)
+		}
+	}
+	return(returnVar);
+}
+//for smr 1-ibetatail(x+1,n-x, p)
+//& ub (x,n-x+1, p)
+real scalar mybinomial(n,x,theta){
+	return(binomial(n,x,theta));
+}
+
+void getInvbinom2(string scalar popVar, string scalar touse, string scalar lb, string scalar ub, real scalar theta, | real scalar ci){
+real colvector popView;
+real matrix transformed;
+class interpolResult scalar result;
+	if (args() < 6){
+		ci = 95;
+	}
+	st_view(popView,.,popVar,touse);
+	result = stepSearch(theta, ci, popView, &mybinomial());
+	transformed = (result.counts:-result.weights):/popView;
+	st_store(.,(lb,ub), touse, transformed);
+}
+
+real scalar mypoisson(n,x,theta){
+	return(poisson(n*theta,x));
+}
+
+void getInvpoisson2(string scalar popVar, string scalar touse, string scalar lb, string scalar ub, real scalar theta, | real scalar ci){
+real colvector popView;
+real matrix transformed;
+class interpolResult scalar result;
+	if (args() < 6){
+		ci = 95;
+	}
+	st_view(popView,.,popVar,touse);
+	result = stepSearch(theta, ci, popView, &mypoisson());
+	transformed = (result.counts:-result.weights):/popView;
+	st_store(.,(lb,ub), touse, transformed);
+}
+
+
+class interpolResult invpoisson2(real scalar theta, real colvector pop){
+	expected=theta*n;
+	i=0;
 	do {
 		F = poisson(expected,i)
 		if  (F >= p) {
@@ -743,4 +673,114 @@ function invpoisson2(n,theta, p){
 		i++
 	} while (st_isnumfmt("r(rp)")<1)
 }
+
+void getBeta2(string scalar popVar,string scalar expectVar, string scalar touse, string scalar lb, string scalar ub, | real scalar ci){
+real colvector popView, expectView;
+real matrix result;
+	if (args() < 6){
+		ci = 95;
+	}
+	st_view(popView,.,popVar,touse);
+	st_view(expectView,.,expectVar,touse);
+	result = GetBetaCis(expectView, popView, ci);
+	st_store(.,(lb,ub), touse, result);
+}
+
+class searchArgs {
+	public real scalar x,n,p
+	public void toString()
+}
+
+void searchArgs::toString(){
+	printf("x:%f,n:%f,p:%f\n",this.x,this.n,this.p);
+}
+
+real scalar BinarySearch(
+	real scalar target,
+	real scalar minStart,
+	real scalar maxStart,
+	class searchArgs scalar sa,
+	pointer(real scalar function) delegate,
+	| real scalar approx,
+	real scalar maxIts)
+{
+	real scalar k, val, argLen, min, max;
+	argLen = args();
+	if (argLen<6){
+		approx = 0.00005;
+	}
+	if (argLen < 7){
+		maxIts = 200;
+	}
+	min = minStart;
+	max = maxStart;
+	for(k=0;k<maxIts;k++){
+		sa.x = (min+max)/2;
+		val = (*delegate)(sa);
+		//sa.toString();
+		if (val >= .) {
+		  return(.);
+		}
+		if ((abs(val-target)<=approx)){
+		  return(sa.x)
+		}
+		if (val<target) {
+		  min = sa.x;
+		} else {
+		  max = sa.x;
+		}
+	} 
+	return(.);
+}
+
+real scalar LbBeta(class searchArgs sa){
+    return(ibetatail(sa.x+1,sa.n-sa.x, sa.p))
+}
+  
+real scalar UbBeta(class searchArgs sa){
+    return(1-ibetatail(sa.x,sa.n-sa.x+1, sa.p))
+}
+real matrix GetBetaCis(
+	real colvector expectVector,
+	real colvector popVector,
+	| real scalar ci)
+{
+real scalar len, i, lastLb,lastUb
+real matrix returnVar
+class searchArgs scalar sa
+	
+	if (args()<2){ci=95;}
+	target = (100-ci)/200;
+	len = rows(expectVector);
+
+	returnVar = J(len, 2, .);
+
+	//define boundries for our binary search, based on the last bound. Obviously the narrower the boundries, the faster the search
+	lastLb=0;
+	lastUb=0;
+
+	for (i = 1;i<=len;i++)
+	{
+		sa.n=popVector[i];
+		sa.p=expectVector[i]/sa.n;
+		sa.x=0;
+		if (LbBeta(sa)<target) {
+		  lastLb=BinarySearch(target, 0, sa.n, sa, &LbBeta());
+		  returnVar[i,1]=lastLb;
+		}else{
+		  returnVar[i,1]= 0;
+		  lastLb=0;
+		}
+		sa.x=sa.n;
+		if (UbBeta(sa)<target){
+		  lastUb=BinarySearch(target, sa.n, 0, sa, &UbBeta());
+		  returnVar[i,2] = lastUb;
+		} else {
+		  lastUb=returnVar[i,2]=sa.n;
+		}
+	}
+	returnVar = returnVar :/ expectVector;
+	return(returnVar);
+}
+
 end
