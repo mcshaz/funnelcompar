@@ -32,7 +32,7 @@ syntax varlist(min=3 max=4) [if] [in] [iweight/], [BINOMial POISson CONTinuous G
 		NODRAw VERTical SCATTERCOLor(string) ASPECTratio(string)  CONTCOLor(string) LEGENDCONTour UNITLABel(string) EXTRAplot(string) ///
 		FUNCTIONLOWopts(string) FUNCTIONUPPopts(string) LEGENDMORe(string) LEGENDopts(string) ONEsided(string) ///
 		SCATTERopts(string) SHADEDContours SOLIDContours N(integer 100) TWOWAYopts(string) YTITle(passthru) XTITle(passthru) TITle(passthru) LINECOLor(string) ///
-		SAVing(string asis) DISPLAYcommand EXPECT(varname numeric)]
+		SAVing(string asis) DISPLAYcommand]
 
 marksample touse,strok
 tokenize `varlist'
@@ -102,7 +102,7 @@ if "`sdvalue'"!="" &"`continuous'"==""{
 	error 198
 }
 if "`smr'"!="" & !inlist("`namedistr'","poisson","gamma","beta"){
-	di as error "Option -smr- implies that option -poisson- must be specified "
+	di as error "Option -smr- implies that distribution -poisson-, -gamma- or -beta- must be specified "
 	error 198
 }
 if `ext_stand'==. &"`noweight'"!=""{
@@ -134,21 +134,29 @@ if "`smr'"!="" & (`ext_stand'!=. |"`noweight'"!="") {
 	di as error "since the external standard is fixed to the expected rate"
 	error 198
 }
-if inlist("`namedistr'","gamma","beta") & "`smr'"==""{
-	di as error "Currently the gamma (incomplete gamma (ratio)) and beta functions only apply to standardised (observed/expected) rates. Please specify SMR"
+if inlist("`namedistr'","gamma") & "`smr'"==""{
+	di as error "Currently the gamma (incomplete gamma (ratio)) option can only be apply to standardised (observed/expected) rates. Please specify SMR"
 	error 198
 }
 if "`gamma'"!="" & !inlist(`ext_stand',.,1){
 	di as error "The external standard must be 1 if the gamma option is specified"
 	error 198
 }
-if "`beta'"!="" & "`expect'"=="" & "`weight'"==""{
-	di as error "if the beta option is specified the variable representing the total number of expected failures per unit (expect) or the population size (iweight) is also required"
+if "`beta'"=="" & "`weight'"!="" {
+	di as error "an iweight can only be applied if the beta option is specified"
 	error 198
 }
-if "`beta'"=="" & "`expect'"!="" {
-	di as error "The total number of expected failures per unit (expect) is only applicable when specifying the beta distribution"
+if "`beta'"!="" & (("`weight'"=="") != ("`smr'"=="")) {
+	di as error "if using beta option, either SMR & iweight options must both be supplied, or both must be missing"
 	error 198
+}
+if "`weight'"!="" {
+	confirm numeric variable `exp'
+	capture assert `exp' > `disp' if `touse'
+	if _rc != 0 {
+		di as error "the iweight (population at risk) must be greater than the expected number of events"
+		error 198
+	}
 }
 if "`exact'"!="" & !inlist("`namedistr'","poisson","binomial"){
 	di as error "Option 'exact' can only be applied to the poisson and binomial distributions"
@@ -304,8 +312,11 @@ local pluslb -
 /*****************/
 /*set the value of the standard according to the options*/
 local obs=_N
-//capture{
-	//qui{
+/*generate the dataset of the reference curves*/
+tempvar _funnel `y'var
+gen byte `_funnel'=`touse'==1
+capture{
+	qui{
 		if `ext_stand'==.{
 			if "`smr'"!=""{
 				local ext_stand `constant'
@@ -338,10 +349,6 @@ local obs=_N
 			local ext_sd=sqrt(r(mean))
 		}
 
-		/*generate the dataset of the reference curves*/
-		tempvar _funnel `y'var
-		gen byte `_funnel'=`touse'==1
-
 		if "`exact'"==""{
 			foreach c in `contours' {
 				tempvar ub`c' lb`c'
@@ -357,7 +364,7 @@ local obs=_N
 			}
 		}
 		else{
-			if ("`beta'"==""){
+			if ("`beta'"=="" | "`weight'"==""){
 				su `disp' if `touse', meanonly
 				local ymin `r(min)'
 				local ymax `r(max)'
@@ -369,7 +376,16 @@ local obs=_N
 				replace `touse' = 1 in `=`obs'+1'/l
 				replace `disp'=(_n-`obs')*`step'+`ymin' in `=`obs'+1'/l 
 				replace `_funnel'=2 in `=`obs'+1'/l 
+				
+				if ("`beta'" != "") {
+					tempvar estd_rpt
+					gen `estd_rpt' = `ext_stand'
+				}
 			}
+			else {
+				tempvar proportion
+				gen float `proportion' = .
+			} 
 			sort `disp'
 			foreach c in `contours' {
 				tempvar ub`c' lb`c'
@@ -383,8 +399,18 @@ local obs=_N
 					local theta=`ext_stand'/`constant'
 					mata: getInvpoisson2("`disp'","`touse'", "`lb`c''", "`ub`c''", `theta',`number`c'')
 				}
-				else if ("`beta'"!=""){ //the beta logic is not really 'exact' to my way of thinking, but the logical method of creating interpolated results for the CIs is the same
-					mata: getBeta2("`exp'","`disp'","`touse'", "`lb`c''", "`ub`c''", `number`c'')
+				else if ("`beta'"!=""){
+					if ("`weight'"!="") {
+						replace `proportion' = `disp'/`exp' if `touse'
+						mata: getBeta2("`exp'","`proportion'","`touse'", "`lb`c''", "`ub`c''", `number`c'')
+						replace `lb`c'' = `lb`c''/`disp'
+						replace `ub`c'' = `ub`c''/`disp'
+					}
+					else {
+						mata: getBeta2("`disp'","`estd_rpt'","`touse'", "`lb`c''", "`ub`c''", `number`c'')
+						replace `lb`c'' = `lb`c''/`disp'
+						replace `ub`c'' = `ub`c''/`disp'
+					}
 				}
 				foreach lim in ub lb{
 					replace ``lim'`c''= ``lim'`c''*`constant' 
@@ -522,7 +548,7 @@ local obs=_N
 				local mark`lev'scatter `mark`lev'scatter' scatter `scatterargs' if `ifstate', mc(`mark`lev'color') `markscatter`lev'options' mlabel(`unit') mlabcolor(`mark`lev'color') ||
 			}
 		}
-	//}
+	}
 	//end qui
 
 	// LEGEND
@@ -558,11 +584,14 @@ local obs=_N
 	if "`nodraw'"==""{
 		`graph_command'
 	}
-/*}
-if _rc!=0 {
-	error _rc
-}*/
-drop if `_funnel'==2
+}
+//end capture
+local rc = _rc
+qui drop if `_funnel'==2
+if `rc'!=0 {
+	error `rc'
+}
+
 
 // RETURNED RESULTS
 return local target_val "`ext_stand'"
@@ -674,15 +703,15 @@ class interpolResult invpoisson2(real scalar theta, real colvector pop){
 	} while (st_isnumfmt("r(rp)")<1)
 }
 
-void getBeta2(string scalar popVar,string scalar expectVar, string scalar touse, string scalar lb, string scalar ub, | real scalar ci){
-real colvector popView, expectView;
+void getBeta2(string scalar popVar,string scalar thetaVar, string scalar touse, string scalar lb, string scalar ub, | real scalar ci){
+real colvector popView, thetaView;
 real matrix result;
 	if (args() < 6){
 		ci = 95;
 	}
 	st_view(popView,.,popVar,touse);
-	st_view(expectView,.,expectVar,touse);
-	result = GetBetaCis(expectView, popView, ci);
+	st_view(thetaView,.,thetaVar,touse);
+	result = GetBetaCis(thetaView, popView, ci);
 	st_store(.,(lb,ub), touse, result);
 }
 
@@ -717,7 +746,6 @@ real scalar BinarySearch(
 	for(k=0;k<maxIts;k++){
 		sa.x = (min+max)/2;
 		val = (*delegate)(sa);
-		//sa.toString();
 		if (val >= .) {
 		  return(.);
 		}
@@ -741,7 +769,7 @@ real scalar UbBeta(class searchArgs sa){
     return(1-ibetatail(sa.x,sa.n-sa.x+1, sa.p))
 }
 real matrix GetBetaCis(
-	real colvector expectVector,
+	real colvector thetaVector,
 	real colvector popVector,
 	| real scalar ci)
 {
@@ -751,21 +779,20 @@ class searchArgs scalar sa
 	
 	if (args()<2){ci=95;}
 	target = (100-ci)/200;
-	len = rows(expectVector);
+	len = rows(popVector);
 
 	returnVar = J(len, 2, .);
 
-	//define boundries for our binary search, based on the last bound. Obviously the narrower the boundries, the faster the search
 	lastLb=0;
 	lastUb=0;
 
 	for (i = 1;i<=len;i++)
 	{
 		sa.n=popVector[i];
-		sa.p=expectVector[i]/sa.n;
+		sa.p=thetaVector[i];
 		sa.x=0;
 		if (LbBeta(sa)<target) {
-		  lastLb=BinarySearch(target, 0, sa.n, sa, &LbBeta());
+		  lastLb=BinarySearch(target, 0, sa.n*sa.p, sa, &LbBeta());
 		  returnVar[i,1]=lastLb;
 		}else{
 		  returnVar[i,1]= 0;
@@ -773,13 +800,12 @@ class searchArgs scalar sa
 		}
 		sa.x=sa.n;
 		if (UbBeta(sa)<target){
-		  lastUb=BinarySearch(target, sa.n, 0, sa, &UbBeta());
+		  lastUb=BinarySearch(target, sa.n, sa.n*sa.p, sa, &UbBeta());
 		  returnVar[i,2] = lastUb;
 		} else {
 		  lastUb=returnVar[i,2]=sa.n;
 		}
 	}
-	returnVar = returnVar :/ expectVector;
 	return(returnVar);
 }
 
