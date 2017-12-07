@@ -189,7 +189,7 @@ forv i1=0(1)`maxmarkcond' {
 	}
 }
 if "`contours'" == "" { // default significance contours
-	local contours "95 99.8"
+	local contours "95.45 99.73"
 }
 if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `markcontour' is one of the contours	
 	local nmarkcont = wordcount("`markcontour'")
@@ -315,7 +315,7 @@ local obs=_N
 /*generate the dataset of the reference curves*/
 tempvar _funnel `y'var
 gen byte `_funnel'=`touse'==1
-capture{
+capture noisily{
 	qui{
 		if `ext_stand'==.{
 			if "`smr'"!=""{
@@ -586,10 +586,9 @@ capture{
 	}
 }
 //end capture
-local rc = _rc
 qui drop if `_funnel'==2
-if `rc'!=0 {
-	error `rc'
+if _rc!=0 {
+	error _rc
 }
 
 
