@@ -319,7 +319,7 @@ capture noisily{
 	qui{
 		if `ext_stand'==.{
 			if "`smr'"!=""{
-				local ext_stand `constant'
+				local ext_stand 1
 			}
 			else{
 				if "`noweight'"==""{
@@ -332,10 +332,10 @@ capture noisily{
 			}
 		}
 		if "`binomial'"!=""{
-			local ext_sd=sqrt(`ext_stand'*(`constant'-`ext_stand'))
+			local ext_sd=sqrt(`ext_stand'*(1-`ext_stand'))
 		}
 		if "`poisson'"!=""{
-			local ext_sd=sqrt(`ext_stand')*sqrt(`constant')
+			local ext_sd=sqrt(`ext_stand')
 		}
 		if `ext_sd'==. & "`continuous'"!=""{
 			tempvar variance
@@ -392,12 +392,10 @@ capture noisily{
 				gen float `lb`c'' = . 
 				gen float `ub`c'' = .
 				if "`binomial'"!=""{
-					local theta=`ext_stand'/`constant'
-					mata: getInvbinom2("`disp'","`touse'", "`lb`c''", "`ub`c''", `theta',`number`c'')
+					mata: getInvbinom2("`disp'","`touse'", "`lb`c''", "`ub`c''", `ext_stand',`number`c'')
 				}
 				else if "`poisson'"!=""{
-					local theta=`ext_stand'/`constant'
-					mata: getInvpoisson2("`disp'","`touse'", "`lb`c''", "`ub`c''", `theta',`number`c'')
+					mata: getInvpoisson2("`disp'","`touse'", "`lb`c''", "`ub`c''", `ext_stand',`number`c'')
 				}
 				else if ("`beta'"!=""){
 					if ("`weight'"!="") {
@@ -445,6 +443,16 @@ capture noisily{
 		/**********************/
 		di in ye "Starting plotting the graph"
 		//arguments in the correct order according to graph to be plotted vertical or horizontal
+		if (`constant'!=1){
+			tempvar scaled
+			gen float `scaled'=`value'*`constant'
+			local val_lab:variable label `value'
+			if ("`val_lab'"=="") {
+				local val_lab `value'
+			}
+			label variable `scaled' `"`val_lab'"'
+			local value `scaled'
+		}
 		local scatterargs=cond("`vertical'"!="","`disp' `value'","`value' `disp' " )
 
 		//CONTOURS
@@ -455,18 +463,18 @@ capture noisily{
 			local i = `i' + 1
 			local h = `i' - 1
 			if "`onesided'" == "lower" {
-				local lub`c' "lc(none)"
-				local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
+				local lub`c' lc(none)
+				local llb`c' lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'
 				local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
 			}
 			else if "`onesided'" == "upper" {
-				local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
-				local llb`c' "lc(none)"
+				local lub`c' lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'
+				local llb`c' lc(none)
 				local contourlabels`c' `"`=2*`h' - 1' "Sign. `number`c''%""'
 			}
 			else{
-				local lub`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'"
-				local llb`c' "lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'"
+				local lub`c' lc(`lc`h'') lp(`lp`h'') lw(thin) `functionupopts'
+				local llb`c' lc(`lc`h'') lp(`lp`h'') lw(thin) `functionlowopts'
 				local contourlabels`c' `"`=2*`h'' "Sign. `number`c''%""'
 			}
 		}
@@ -480,14 +488,14 @@ capture noisily{
 					local functionArgs range(`range') n(`n') `l`lim'`c'' `contourargs' 
 					if ("`gamma'" == ""){
 						local contourargs=cond("`vertical'"!=""," horizontal","")
-						local singlecontour `ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x)
+						local singlecontour `constant'*`ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x)
 						if ("`trunc0'"!="" && "`lim'"=="lb"){
 							local singlecontour max(`singlecontour',0)
 						}
 						local function `function' function `singlecontour', `functionArgs' ||
 					}
 					else if ("`lim'"=="ub") {
-						local function `function' function invgammap(x+1,(100+`number`c'')/200)/x, `functionArgs' || function invgammap(x,(100-`number`c'')/200)/x, `functionArgs' ||
+						local function `function' function `constant'*invgammap(x+1,(100+`number`c'')/200)/x, `functionArgs' || function `constant'*invgammap(x,(100-`number`c'')/200)/x, `functionArgs' ||
 					}
 				}
 				else{
@@ -577,7 +585,7 @@ capture noisily{
 		local legendtot `"off"'
 	}
 	// ACTUAL GENERATION OF GRAPH
-	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`ext_stand',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
+	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`=`ext_stand'*`constant'',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
 	if "`displaycommand'"!=""{
 		di in ye `"`graph_command'"'
 	}

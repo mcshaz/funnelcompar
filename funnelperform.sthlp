@@ -49,10 +49,11 @@ but without using {it:pop} as weights {p_end}
 {synopt :{opth contcol:or(colorstyle:color)}}specify colour of the contour lines if {opt shadedcontours} is not specified {p_end}
 {synopt :{opt shadedc:ontours}}specify shaded, instead of black, contour lines {p_end}
 {synopt :{opt solidc:ontours}}specify solid, instead of dashed, contour lines{p_end}
+{synopt :{opt n: }}the number of points connecting the the contour lines{p_end}
 
 {syntab :Constant}
 {synopt :{opt const:ant(num)}}contains the multiplicative constant by which the 
-indicators contained in {it:value} are multiplied, e.g. 100 if they are percentages{p_end}
+indicators contained in {it:value} are multiplied on the y-axis, e.g. 100 if they are percentages{p_end}
 
 {syntab :Legend}
 {synopt :{opt legendcont:our}}specify that contours should be labeled with labels of the form "Sign. 5%" {p_end}
@@ -80,7 +81,7 @@ and that the legend of this scatter should be {opt legendmarkcond} {p_end}
 {synopt :{opth colormark:cond(colorstyle:color)}}option of {opt markcond} {p_end}
 {synopt :{opt legendmarkcond:(string)}}option of {opt markcond} {p_end}
 {synopt :{opt optionsmarkcond:(options)}}option of {opt markcond} {p_end}
-{synopt :{opt markcond1:(condition)}... }up to 5 conditions might be specified of the form {opt markcond}{it:i}{opt (condition)}; specifies that points satisfying {opt markcond}{it:i}{opt (string)}  should be coloured in 
+{synopt :{opt markcond1:(condition)}... }up to 4 conditions might be specified of the form {opt markcond}{it:i}{opt (condition)}; specifies that points satisfying {opt markcond}{it:i}{opt (string)}  should be coloured in 
 {opt colormarkcond}{it:i}{opt (color)}with {helpb marker_options} contained in {opt optionsmarkcond}{it:i}{opt (options)} and that the legend of this scatter should be {opt legendmarkcond}{it:i}{opt (string)} {p_end}
 
 {syntab :Marking options: markunit}
@@ -130,7 +131,8 @@ d) labeling of the data points handles string names and encoded (labeled) intege
 e) scatteroptions will accept {help marker_label_options} in order to make it easier to avoid overlapping labels
 f) a trunc0 option to prevent confidence intervals being displayed below 0, for instances where this would be impossible
 g) confidence intervals now default to 95.45 & 99.73 (2 & 3 std deviations)
-h) more examples including data are included in this help file
+h) fix const option so that y-axis labels change but graph appears the same
+i) more examples including data are included in this help file
 {p_end}
 
 {title:Target distribution and algorithm for parameter definition}
@@ -172,7 +174,7 @@ a default the normal approximation is used.{p_end}
 {phang2}. {stata gen florapq = risk_of_death*(1- risk_of_death)}{p_end}
 {phang2}. {stata collapse (sum) risk_of_death died florapq (count) freq=died, by(unit)}{p_end}
 
-{phang2}. {stata gen se = sqrt(florapq)}{p_end}
+{phang2}. {stata gen se_predict = sqrt(florapq)}{p_end}
 {phang2}. {stata gen smr = died/ risk_of_death}{p_end}
 {phang2}. {stata sum died, meanonly}{p_end}
 {phang2}. {stata local mort_prop = r(sum)/1500}{p_end}
@@ -184,9 +186,10 @@ a default the normal approximation is used.{p_end}
 
 {phang2}. {stata funnelperform smr risk_of_death unit , gamma markup marklow smr}{p_end}
 {phang2}. {stata funnelperform smr risk_of_death unit [iw= freq], beta smr markup markall}{p_end}
-{phang2}. {stata funnelperform ramr freq unit , beta markup marklow markall scatteropt(mlabv(mlabpos))}{p_end}
-{phang2}. {stata funnelperform ramr freq unit, binomial markup marklow markall}{p_end}
-{phang2}. {stata funnelperform smr freq unit se , cont  markup marklow markall const(100) trunc0{p_end}
+{phang2}. {stata funnelperform ramr freq unit , beta markup marklow markall scatteropt(mlabv(mlabpos)) const(100)}{p_end}
+{phang2}. {stata funnelperform ramr freq unit, binomial markup marklow markall const(100)}{p_end}
+{phang2}. {stata funnelperform smr freq unit se , cont  markup marklow markall trunc0}{p_end}
+{phang2}. {stata funnelperform ramr freq unit, pois markup marklow markall exact const(100)}{p_end}
 
 {pstd}Plot funnel of percentages, specify an external target and specify the legend of the units{p_end}
 {phang}{cmd:. funnelcompar  measure pop unit, binom const(100) ext_stand(23) unitlabel("LHAs")}{p_end}
