@@ -11,13 +11,15 @@
 program funnelperform, rclass sortpreserve
 version 9.1
 
-/*set a maximum of 5+1 conditions for superimposing scatters and specifying colors and legends*/
-local maxmarkcond=4
-forv i1=1(1)`maxmarkcond' {
-	local markcondi `markcondi' MARKCOND`i1'(string asis)
-	local colormarkcondi `colormarkcondi' COLORMARKCOND`i1'(string asis)
-	local legendmarkcondi `legendmarkcondi' LEGENDMARKCOND`i1'(string asis)
-	local optionsmarkcondi `optionsmarkcondi' OPTIONSMARKCOND`i1'(string asis)
+/*set a maximum conditions for superimposing scatters and specifying colors and legends*/
+local maxmarkcond=3
+numlist "1(1)`maxmarkcond'"
+foreach i in "" `r(numlist)' {
+	local markcondi `markcondi' MARKCOND`i'(string asis)
+	local colormarkcondi `colormarkcondi' COLORMARKCOND`i'(string asis)
+	local legendmarkcondi `legendmarkcondi' LEGENDMARKCOND`i'(string asis)
+	local optionsmarkcondi `optionsmarkcondi' OPTIONSMARKCOND`i'(string asis)
+	local labelcondi `labelcondi' LABELCOND`i'
 }
 local defaultReal -1.7e+38
 /*****************/
@@ -25,10 +27,9 @@ local defaultReal -1.7e+38
 /*****************/
 syntax varlist(min=3 max=4) [if] [in] [iweight/], [BINOMial POISson CONTinuous GAMMA BETA SMR ///
 		ext_stand(real `defaultReal') NOWEIght ext_sd(real `defaultReal') EXACt Contours(numlist) CONSTant(real 1) ///
-		MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) MARKAll MARKTEXTOPtions(string) ///
-		MARKSCATTEROPTions(string) MARKCOLor(string)  MARKCOND(string asis) TRUNC0 ///
-		COLORMARKcond(string asis) LEGENDMARKCOND(string asis) OPTIONSMARKCOND(string asis) ///
-		`markcondi' `colormarkcondi' `legendmarkcondi' `optionsmarkcondi' ///
+		MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) LABELUnits(string asis) MARKAll MARKTEXTOPtions(string) ///
+		MARKSCATTEROPTions(string) MARKCOLor(string) TRUNC0 ///
+		`markcondi' `colormarkcondi' `legendmarkcondi' `optionsmarkcondi' `labelcondi' ///
 		NODRAw VERTical SCATTERCOLor(string) ASPECTratio(string)  CONTCOLor(string) LEGENDCONTour UNITLABel(string) EXTRAplot(string) ///
 		FUNCTIONLOWopts(string) FUNCTIONUPPopts(string) LEGENDMORe(string) LEGENDopts(string) ONEsided(string) ///
 		SCATTERopts(string) SHADEDContours SOLIDContours N(integer 100) TWOWAYopts(string) YTITle(passthru) XTITle(passthru) TITle(passthru) LINECOLor(string) ///
@@ -379,7 +380,7 @@ capture noisily{
 				
 				if ("`beta'" != "") {
 					tempvar estd_rpt
-					gen `estd_rpt' = `ext_stand'
+					gen float `estd_rpt' = `ext_stand'
 				}
 			}
 			else {
@@ -435,24 +436,26 @@ capture noisily{
 				char define _dta[`char'] `"``char''"'
 			}
 			save `namefile',replace
-			di in ye `"File for funnel plot generation was saved in `namefile'"'
+			noi di in ye `"File for funnel plot generation was saved in `namefile'"'
 			restore
 		}
 		/**********************/
 		/** GRAPH GENERATION **/
 		/**********************/
-		di in ye "Starting plotting the graph"
-		//arguments in the correct order according to graph to be plotted vertical or horizontal
+		noi di in ye "Starting plotting the graph"
+		
+		local val_label:variable label `value'
+		if ("`val_label'"=="") {
+			local val_label `value'
+		}
+
 		if (`constant'!=1){
 			tempvar scaled
 			gen float `scaled'=`value'*`constant'
-			local val_lab:variable label `value'
-			if ("`val_lab'"=="") {
-				local val_lab `value'
-			}
-			label variable `scaled' `"`val_lab'"'
+			//what to do with format - could copy format from value, but depending on scale may not be relevant
 			local value `scaled'
 		}
+		//arguments in the correct order according to graph to be plotted vertical or horizontal
 		local scatterargs=cond("`vertical'"!="","`disp' `value'","`value' `disp' " )
 
 		//CONTOURS
@@ -488,7 +491,7 @@ capture noisily{
 					local functionArgs range(`range') n(`n') `l`lim'`c'' `contourargs' 
 					if ("`gamma'" == ""){
 						local contourargs=cond("`vertical'"!=""," horizontal","")
-						local singlecontour `constant'*`ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x)
+						local singlecontour `constant'*(`ext_stand'`plus`lim''`invnorm'*`ext_sd'/sqrt(x))
 						if ("`trunc0'"!="" && "`lim'"=="lb"){
 							local singlecontour max(`singlecontour',0)
 						}
@@ -511,22 +514,58 @@ capture noisily{
 		tempvar marker 
 		gen byte `marker' = 1 
 		
-		if (`"`markunits'"'!="") {
-			local ++maxmarkcond
+		if (`"`labelunits'"'!="") {
+			local labelwords:word count `labelunits'
 			capture confirm numeric variable `unit'
 			if (_rc==0) {
-				local markunits = subinstr("`markunits'", " ", ",", .)
+				local unitvallabel:value label `unit'
+				tempname newunitlabel
+				if ("`unitvallabel'"==""){
+					label define `newunitlabel' `labelunits'
+				}
+				else {
+					label copy `unitvallabel' `newunitlabel'
+					label define `newunitlabel' `labelunits', modify
+				}
+				label values `unit' `newunitlabel'
+				forvalues i=1(2)`labelwords'{
+					local v:word `i' of `labelunits'
+					local markunits `markunits' `v'
+				}
 			}
 			else {
-				local markunits = `"""' + subinstr(`"`markunits'"', " ", `"",""', .) + `"""'
+				tempvar unitclone
+				gen `unitclone' = `unit'
+				forvalues i=1(2)`labelwords'{
+					local v:word `i' of `labelunits'
+					local r:word `=`i'+1' of `labelunits'
+					replace `unitclone' = `"`r'"' if `unitclone' == "`v'"
+					local markunits "`markunits'" "`r'"
+				}
+				local markunits `""`markunits'""'
+				local unit `unitclone'
 			}
+		}
+		if (`"`markunits'"'!="") {
+			capture confirm numeric variable `unit'
+			//some of what follows would be far better managed with a regex, but as far as I am awatre the regex functions onlty replace the FIRST instance
+			if (_rc==0) {
+				local markunits = subinstr("`markunits'", " ", ",", .)
+				local markunits = subinstr("`markunits'", ",,", ",", .)
+			}
+			else {
+				local markunits = subinstr(`"`markunits'"', `"" ""', `"",""', .)
+				local markunits = subinstr(`"`markunits'"', `""  ""', `"",""', .)
+			}
+			local ++maxmarkcond
 			local markcond`maxmarkcond' inlist(`unit',`markunits')
+			local labelcond`maxmarkcond' 1
 		}
 		if("`markall'"!="") {
 			local mainscatteropts mlabel(`unit') `scatteropts'
 		}
-		
-		forv i=1(1)`maxmarkcond' {
+		numlist "1(1)`maxmarkcond'"
+		foreach i in "" `r(numlist)' {
 			if `"`markcond`i''"'!=""{
 				if "`optionsmarkcond`i''"==""{
 					local optionsmarkcond`i' `"`scatteropts' `optionsmarkcond'"'
@@ -534,8 +573,13 @@ capture noisily{
 				if ("`colormarkcond`i''"==""){
 					local colormarkcond`i' `colormarkcond'
 				}
-				replace `marker' = 3 + `i' if `_funnel'==1 & `markcond`i''
-				local markconditions `markconditions' scatter `scatterargs' if `marker' == 3 + `i' ,mc(`colormarkcond`i'') `optionsmarkcond`i'' mlabel(`unit') mlabcolor(`colormarkcond`i'') ||
+				local markval = `i' +4
+				replace `marker' = `markval' if `_funnel'==1 & `markcond`i''
+				local markconditions `markconditions' scatter `scatterargs' if `marker' == `markval', mc(`colormarkcond`i'') `optionsmarkcond`i''
+				if ("`labelcond`i''"!="") {
+					local markconditions `markconditions' mlabel(`unit') mlabcolor(`colormarkcond`i'')
+				}
+				local markconditions `markconditions' ||
 			}
 		}
 		
@@ -543,11 +587,11 @@ capture noisily{
 		foreach lev in up low{
 			if `"`mark`lev''"'!=""{
 				if ("`lev'"=="up"){
-					replace `marker' = 2 if `_funnel'==1 & `value' > `ub`markcontour''
+					replace `marker' = 2 if `_funnel'==1 & `value' > `ub`markcontour'' * `constant'
 					local ifstate `marker' == 2
 				} 
 				else {
-					replace `marker' = 3 if `_funnel'==1 & `value' < `lb`markcontour''
+					replace `marker' = 3 if `_funnel'==1 & `value' < `lb`markcontour'' * `constant'
 					local ifstate `marker' == 3
 				}
 				if "`markscatter`lev'options'"==""{
@@ -568,7 +612,7 @@ capture noisily{
 		//legend of units
 		local legendtot `"order( 1 `"`unitlabel'"' "'
 		//legend of conditions
-		forv i1=0(1)`maxmarkcond' {
+		forv i1=0(1)`=`maxmarkcond'-1' {
 			local i=cond(`i1'==0,"","`i1'")
 			local ip=`i1'+1
 			if `"`markcond`i''"'!="" &`"`legendmarkcond`i''"'!=""{
@@ -585,7 +629,7 @@ capture noisily{
 		local legendtot `"off"'
 	}
 	// ACTUAL GENERATION OF GRAPH
-	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`=`ext_stand'*`constant'',lcolor(`linecolor') ) `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
+	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`=`ext_stand'*`constant'',lcolor(`linecolor') ) ytitle(`"`val_label'"') `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
 	if "`displaycommand'"!=""{
 		di in ye `"`graph_command'"'
 	}
@@ -594,11 +638,20 @@ capture noisily{
 	}
 }
 //end capture
+//clean up
 qui drop if `_funnel'==2
-if _rc!=0 {
-	error _rc
+if ("`newunitlabel'"!=""){
+	if ("`unitvallabel'"!=""){
+		label values `unit' `unitvallabel'
+	}
+	else {
+		label values `unit' .
+	}
+	label drop `newunitlabel'
 }
-
+if _rc!=0 {
+	qui error _rc
+}
 
 // RETURNED RESULTS
 return local target_val "`ext_stand'"

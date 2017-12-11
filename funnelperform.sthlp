@@ -49,7 +49,7 @@ but without using {it:pop} as weights {p_end}
 {synopt :{opth contcol:or(colorstyle:color)}}specify colour of the contour lines if {opt shadedcontours} is not specified {p_end}
 {synopt :{opt shadedc:ontours}}specify shaded, instead of black, contour lines {p_end}
 {synopt :{opt solidc:ontours}}specify solid, instead of dashed, contour lines{p_end}
-{synopt :{opt n: }}the number of points connecting the the contour lines{p_end}
+{synopt :{opt n: }}number of points connecting the the contour lines. Default is 100.{p_end}
 
 {syntab :Constant}
 {synopt :{opt const:ant(num)}}contains the multiplicative constant by which the 
@@ -79,14 +79,15 @@ indicators contained in {it:value} are multiplied on the y-axis, e.g. 100 if the
 {synopt :{opt markcond(condition)}}must contain a condition valid on the active dataset; specifies that points satisfying that condition should be coloured in {opt colormarkcond} with {helpb marker_options} and {helpb marker_label_options} contained in {opt optionsmarkcond} 
 and that the legend of this scatter should be {opt legendmarkcond} {p_end}
 {synopt :{opth colormark:cond(colorstyle:color)}}option of {opt markcond} {p_end}
-{synopt :{opt legendmarkcond:(string)}}option of {opt markcond} {p_end}
-{synopt :{opt optionsmarkcond:(options)}}option of {opt markcond} {p_end}
-{synopt :{opt markcond1:(condition)}... }up to 4 conditions might be specified of the form {opt markcond}{it:i}{opt (condition)}; specifies that points satisfying {opt markcond}{it:i}{opt (string)}  should be coloured in 
-{opt colormarkcond}{it:i}{opt (color)}with {helpb marker_options} contained in {opt optionsmarkcond}{it:i}{opt (options)} and that the legend of this scatter should be {opt legendmarkcond}{it:i}{opt (string)} {p_end}
+{synopt :{opt labelcond: }}display individual unit identifiers for units satisfying the {opt markcond}. default is not to display individual unit identifiers{p_end}
+{synopt :{opt legendmarkcond:(string)}}the string to print in the legend associated with the relevant {opt markcond} {p_end}
+{synopt :{opt optionsmarkcond:(options)}}{helpb marker_options}.option of {opt markcond} {p_end}
+{synopt :{opt markcond1:(condition)}... }up to 3 additional conditions might be specified of the form {opt markcond}{it:#}{opt (condition)}; specifies that points satisfying {opt markcond}{it:#}{opt (condition)} should be coloured in 
+{opt colormarkcond}{it:#}{opt (color)} with the {helpb marker_options} contained in {opt optionsmarkcond}{it:#}{opt (options)} and that the legend of this condition grouping should display the string in {opt legendmarkcond}{it:#}{opt (string)} {p_end}
 
 {syntab :Marking options: markunit}
-{synopt :{opt marku:nits(# "text" [# ["text"] ...])}}list a set of values of {it:unit} whose scatter point must labeled; if a string is specified after a value, then that string is used to label the unit corresponding to that value, 
-otherwise value label or value itself is used{p_end}
+{synopt :{opt marku:nits(# [# ...])}}list a set of values of {it:unit} whose scatter point must labeled; The value label or value itself is used as a label{p_end}
+{synopt :{opt labelu:nits(v "d" [v "d"..])}}custom labels where v is the value and d is the display name{p_end}
 {synopt :{opth markcol:or(colorstyle:color)}}specify the colour of the units{p_end}
 {synopt :{opt marktextop:tions(options)}}specify any {helpb added_text_options}; default is {it:placement(ne)}  {p_end}
 
@@ -124,15 +125,16 @@ is also specified, and contains the standard deviations of the indicator values.
 with a target line and control limits (contours), that narrow as the sample size gets bigger. The plot graphically tests whether each value of the indicator is extracted from a target distribution specified by the options. {p_end}
 
 {pstd}funnelperform was forked off the user written command {cmd: funnelcompar} written by Silvia Forni & Rosa Gini, in order to address a few issues - namely 
-a) if the program fails the data (both variables and number of observations) should be left untouched
-b) gama and beta distributions have been added 
-c) exact methods are significantly more performant with smoother contour lines
-d) labeling of the data points handles string names and encoded (labeled) integers equally as well
-e) scatteroptions will accept {help marker_label_options} in order to make it easier to avoid overlapping labels
-f) a trunc0 option to prevent confidence intervals being displayed below 0, for instances where this would be impossible
-g) confidence intervals now default to 95.45 & 99.73 (2 & 3 std deviations)
-h) fix const option so that y-axis labels change but graph appears the same
-i) more examples including data are included in this help file
+a) if the program fails the data (both variables and number of observations) should be left untouched;
+b) gama and beta distributions have been added;
+c) exact methods are significantly more performant with smoother contour lines;
+d) labeling of the data points handles string names and encoded (labeled) integers equally as well;
+e) scatteroptions will accept {help marker_label_options} in order to make it easier to avoid overlapping labels;
+f) a trunc0 option to prevent confidence intervals being displayed below 0, for instances where this would be impossible;
+g) confidence intervals now default to 95.45 & 99.73 (2 & 3 std deviations);
+h) fix const option so that y-axis labels change but graph appears the same;
+i) add labelunits option allowing consistent syntax whether the identifier storage type is numeric or string
+j) more examples including data are included in this help file;
 {p_end}
 
 {title:Target distribution and algorithm for parameter definition}
@@ -166,56 +168,65 @@ a default the normal approximation is used.{p_end}
 {title:Examples}
 
 {pstd}Setup{p_end}
+{phang2}Create individual patient data{p_end}
 {phang2}. {stata clear}{p_end}
-{phang2}. {stata set obs 1500}{p_end}
+{phang2}. {stata set obs 2000}{p_end}
 {phang2}. {stata gen unit = irecode(_n,50,150,300,500,750,1250)}{p_end}
 {phang2}. {stata gen float risk_of_death = uniform()*.2}{p_end}
-{phang2}. {stata gen byte died=uniform()+cond(unit==3,0.25,0.1)}{p_end}
-{phang2}. {stata gen florapq = risk_of_death*(1- risk_of_death)}{p_end}
-{phang2}. {stata collapse (sum) risk_of_death died florapq (count) freq=died, by(unit)}{p_end}
+{phang2}. {stata gen byte died=uniform()+cond(unit==3,0.25,0.1)}{p_end} 
+{phang2}Collapse patient data down by unit{p_end}
+{phang2}. {stata collapse (sum) risk_of_death died (count) freq=died, by(unit)}{p_end}
 
-{phang2}. {stata gen se_predict = sqrt(florapq)}{p_end}
+{phang2}Create summary statistics{p_end}
 {phang2}. {stata gen smr = died/ risk_of_death}{p_end}
 {phang2}. {stata sum died, meanonly}{p_end}
-{phang2}. {stata local mort_prop = r(sum)/1500}{p_end}
-{phang2}. {stata gen ramr = smr*`mort_prop'}{p_end}
+{phang2}. {stata gen ramr = smr*r(sum)/2000}{p_end}
 {phang2}. {stata label variable risk_of_death "predicted number of deaths"}{p_end}
 {phang2}. {stata label variable freq "number of procedures"}{p_end}
 {phang2}. {stata label variable ramr "risk adjusted mortality rate"}{p_end}
-{phang2}. {stata gen byte mlabpos = runiform()*12+1}{p_end}
+{phang2}. {stata gen byte mlabpos = _n}{p_end}
+{phang2}. {stata gen byte group = mod(unit,3)}{p_end}
+{phang2}. {stata label define tmplbl 1 "OS1"}{p_end}
+{phang2}. {stata label values unit tmplbl}{p_end}
 
+{pstd}Application{p_end}
+{phang2}gamma distribution agains predicted number of deaths{p_end}
 {phang2}. {stata funnelperform smr risk_of_death unit , gamma markup marklow smr}{p_end}
+{phang2}beta distribution agains predicted number of deaths, weighted by total number of cases. When using this option, the contours can only have as many points as there are data points{p_end}
 {phang2}. {stata funnelperform smr risk_of_death unit [iw= freq], beta smr markup markall}{p_end}
-{phang2}. {stata funnelperform ramr freq unit , beta markup marklow markall scatteropt(mlabv(mlabpos)) const(100)}{p_end}
+{phang2}beta distribution agains number of cases. const(100) displays risk adjusted mortality rate as a percentage on the y-axis{p_end}
+{phang2}. {stata funnelperform ramr freq unit , beta markup marklow markall scatteropt(mlabv(mlabpos)) const(100) ytitle("risk adj mortality (%)")}{p_end}
+{phang2}using the binomial distribution to calculate mean and standard deviation from the data points provided, then applying normal distribution confidence intervals.
+The exact option would display binomial distribtion confidence intervals{p_end}
 {phang2}. {stata funnelperform ramr freq unit, binomial markup marklow markall const(100)}{p_end}
-{phang2}. {stata funnelperform smr freq unit se , cont  markup marklow markall trunc0}{p_end}
-{phang2}. {stata funnelperform ramr freq unit, pois markup marklow markall exact const(100)}{p_end}
+{phang2}poisson confidence intervals. Display 95% & 99% conficence intervals, rather than 2 & 3 std deviation{p_end}
+{phang2}. {stata funnelperform ramr freq unit, pois markup marklow markall exact const(100) contour(95 99)}{p_end}
+{phang2}applying an externally derived reference line (1.0) and standard deviation, notmal distribution confidence intervals{p_end}
+{phang2}. {stata funnelperform smr freq unit, cont markup markall ext_sd(3.9) ext_stand(1) trunc0 unitlabel("LHAs")}{p_end}
+{phang2}Plot funnel of percentages and mark in blue a group of units and in green another group of units{p_end}
+{phang2}. {stata funnelperform ramr freq unit, binomial const(100) markcond(group==0) legendmarkcond(Group 0) colormarkcond(blue) markcond1(group==1) labelcond1 legendmarkcond1(Group 1) colormarkcond1(green)}{p_end}
+{phang2}Plot funnel of indirectly standardised rates, mark in green a single point labelled "Your hospital", display the command and save a dataset containing instructions for plotting the graph again{p_end}
+{phang2}. {stata funnelperform smr risk_of_death unit, poisson smr labelunit(2 "Your hospital") markunit(4) display saving(for_funnel)}{p_end}
 
-{pstd}Plot funnel of percentages, specify an external target and specify the legend of the units{p_end}
-{phang}{cmd:. funnelcompar  measure pop unit, binom const(100) ext_stand(23) unitlabel("LHAs")}{p_end}
+{phang2}And if the unit variable is of string data type{p_end}
+{phang2}. {stata tostring unit, replace force}{p_end}
+{phang2}. {stata replace unit="unit 2" if unit=="2"}{p_end}
+{phang2}. {stata funnelperform smr risk_of_death unit, poisson smr labelunit(4 "Your unit" "unit 2" "Sister unit") markunit(5)}{p_end}
 
-{pstd}Plot funnel of percentages and mark in blue a group of units and in green another group of units{p_end}
-{phang}{cmd:. funnelcompar  measure pop unit, binomial const(100) markcond(group==3) legendmarkcond(Group 3) colormarkcond(blue) markcond1(group==5) legendmarkcond1(Group 5) colormarkcond1(green)}{p_end}
-
-{pstd}Plot funnel of indirectly standardised rates, mark in green a single point labelled "Your hospital", display the command and save a dataset containing instructions for plotting the graph again{p_end}
-{phang}{cmd:. funnelcompar smr expected hospital, poisson smr  markunit(37 "Your hospital")  display saving(for_funnel)}
-
-{phang}{cmd: funnelperform smr predicted hosp [iw= tot ], beta smr contours(95.45 99.73) markup markall scatteropt(vmlabpos(mlabpos))}
-{break}
-{p_end}
-
-{pstd}Plot funnel of means and label units that fail the test at 0.02% significance{p_end}
-{phang}{cmd:. funnelcompar mean pop unit sd, continuous markup marklow markcontour(.2)}
-{break}
-{p_end}
+{title:Notes for those wanting to improve or help with this project}
+{pstd}The project is hosted on github at {browse "https://github.com/mcshaz/funnelperform"}. Raising new issues and pull requests are always welcome. 
+Please note that for tracing purposes it may be easier to comment out the capture statement and closing bracket. 
+This capture block exists so that if the program encounters an error while calculating exact confidence intervals, the user is not faced with a different size data set than prior to the command. 
+This capture statement will need to be uncommented prior to submitting a pull request.
+Please also check that every example above produces a plot with the appropriate marker labels, marker colors, legend etc.{p_end}
 
 {title:Updating Author}
 Brent Mcharry, Starship Children's Hospital, Auckland, New Zealand
-Email: {browse "mailto:brentm@adhb.govt.nz":brentm@adhb.govt.nz}
+Email: {browse "mailto:brent@focused-light.net":brent@focused-light.net}
 
 {title:Original Authors}
 Silvia Forni, Rosa Gini, Agenzia regionale di sanità della Toscana, Italy.
-Email: {browse "mailto:rosa.gini@arsanita.toscana.it":rosa.gini@arsanita.toscana.it}
+Last Known Email: {browse "mailto:rosa.gini@arsanita.toscana.it":rosa.gini@arsanita.toscana.it}
 
 {title:References}
 {phang}
