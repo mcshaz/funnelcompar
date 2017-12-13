@@ -544,14 +544,27 @@ capture noisily{
 		if (`"`markunits'"'!="") {
 			capture confirm numeric variable `unit'
 			//some of what follows would be far better managed with a regex, but as far as I am awatre the regex functions onlty replace the FIRST instance
+			
 			if (_rc==0) {
-				while (regexm("`markunits'", " +")){
-					local markunits = regexr("`markunits'", " +", "," )
+				if c(stata_version)>=14 {
+					//newer regex replace all command
+					ustrregexra("`markunits'", " +", ",")
+				}
+				else {
+					while (regexm("`markunits'", " +")){
+					   local markunits = regexr("`markunits'", " +", ",")
+					}
 				}
 			}
 			else {
-				while (regexm(`"`markunits'"', `"" +""')){
-					local markunits = regexr(`"`markunits'"', `"" +""', `"",""')
+				//if version>=14 ustrregexra(`"`markunits'"', `"" +""', `"",""')
+				if c(stata_version)>=14 {
+					ustrregexra(`"`markunits'"', `"" +""', `"",""')
+				}
+				else {
+					while (regexm(`"`markunits'"', `"" +""')){
+						local markunits = regexr(`"`markunits'"', `"" +""', `"",""')
+					}
 				}
 			}
 			local ++maxmarkcond
