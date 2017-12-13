@@ -56,7 +56,7 @@ but without using {it:pop} as weights {p_end}
 indicators contained in {it:value} are multiplied on the y-axis, e.g. 100 if they are percentages{p_end}
 
 {syntab :Legend}
-{synopt :{opt legendcont:our}}specify that contours should be labeled with labels of the form "Sign. 5%" {p_end}
+{synopt :{opt legendcont:our}}specify that contours should be labeled with labels of the form "Sign. 95%" {p_end}
 {synopt :{opt legendmor:e(options)}}specify any additional graph to be labeled; the {it:options} string must be contained in compound double quotes, e.g. `"3 "lower bound""'{p_end}
 {synopt :{opt legend:options(options)}}specify any {helpb legend_options} {p_end}
 
@@ -72,7 +72,7 @@ indicators contained in {it:value} are multiplied on the y-axis, e.g. 100 if the
 {synopt :{opth markupcol:or(colorstyle:color)}}option of {opt markup} {p_end}
 {synopt :{opt marklow: }}specify that points lower the countour at significance {opt markcontour} should be coloured in {opt marklowcolor} {p_end}
 {synopt :{opth marklowcol:or(colorstyle:color)}}option of {opt marklow} {p_end}
-{synopt :{opt markcon:tour(num)} }option of {opt markup} and/or {opt marklow}, the default is the first contour of the numlist in {opt contours(numlist)} - if {opt contours} is not specified, the default is significance 5%{p_end}
+{synopt :{opt markcon:tour(num)} }option of {opt markup} and/or {opt marklow}, the default is the first contour of the numlist in {opt contours(numlist)} - if {opt contours} is not specified, the default is significance 95%{p_end}
 {synopt :{opt trunc0: }}truncate the confidence intervals at 0. Use when the y axis represents a rate or ratio for which a negatve number could not exist{p_end}
 
 {syntab :Marking options: conditions}
@@ -222,7 +222,7 @@ Please also check that every example above produces a plot with the appropriate 
 
 {title:Updating Author}
 Brent Mcharry, Starship Children's Hospital, Auckland, New Zealand
-Email: {browse "mailto:brent@focused-light.net":brent@focused-light.net}
+Email: {browse "mailto:brentm@adhb.govt.nz":brentm@adhb.govt.nz}
 
 {title:Original Authors}
 Silvia Forni, Rosa Gini, Agenzia regionale di sanità della Toscana, Italy.

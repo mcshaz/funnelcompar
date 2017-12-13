@@ -27,7 +27,7 @@ local defaultReal -1.7e+38
 /*****************/
 syntax varlist(min=3 max=4) [if] [in] [iweight/], [BINOMial POISson CONTinuous GAMMA BETA SMR ///
 		ext_stand(real `defaultReal') NOWEIght ext_sd(real `defaultReal') EXACt Contours(numlist) CONSTant(real 1) ///
-		MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) LABELUnits(string asis) MARKAll MARKTEXTOPtions(string) ///
+		MARKCONtour(real `defaultReal') MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string) MARKUnits(string asis) LABELUnits(string asis) MARKAll MARKTEXTOPtions(string) ///
 		MARKSCATTEROPTions(string) MARKCOLor(string) TRUNC0 ///
 		`markcondi' `colormarkcondi' `legendmarkcondi' `optionsmarkcondi' `labelcondi' ///
 		NODRAw VERTical SCATTERCOLor(string) ASPECTratio(string)  CONTCOLor(string) LEGENDCONTour UNITLABel(string) EXTRAplot(string) ///
@@ -41,7 +41,7 @@ local value `1'
 local disp `2'
 local unit `3'
 local sdvalue `4'
-foreach v in ext_stand ext_sd{
+foreach v in ext_stand ext_sd markcontour{
 	if (``v''==`defaultReal'){
 		local `v' .
 	}
@@ -69,7 +69,7 @@ foreach v in ext_stand ext_sd{
 -MARKUnits(string asis) MARKTEXTOPtions MARKCOLor(string) MARKSCATTEROPTions()- allows to mark specific points listed in -MARKUnits- with specified color, possible labels and scatter options
 -MARKAll - marks all points with their labels or values
 -MARKCOND(string asis) COLORMARKCOND(string asis) LEGENDMARKCOND(string asis)- marks points accoprding to some conditions on data (up to 6 conditions are available of the form markcond(), markcond1(), markcond2()... )
--MARKCONtour(string) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string)- marks point upper/lower the contour at -markcontour- confidence level
+-MARKCONtour(real) MARKUP MARKUPCOLor(string) MARKLOW MARKLOWCOLor(string)- marks point upper/lower the contour at -markcontour- confidence level
 // deprecated - mirror twoway function n option instead -STEP- set the granularity at which the contour lines are computed; a default is computed from the data
 -SAVing(string asis)- saves the dataset that generates the curves
 -DISPLAYcommand- makes the routine display the command that generates the graph
@@ -192,14 +192,9 @@ forv i1=0(1)`maxmarkcond' {
 if "`contours'" == "" { // default significance contours
 	local contours "95.45 99.73"
 }
-if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"!=""{ //checks that `markcontour' is one of the contours	
-	local nmarkcont = wordcount("`markcontour'")
-	if `nmarkcont'>1{
-		di as error `"Option -markcontour- should contain a single value chosen among the contours `contours' that you asked to plot"'
-		error 198
-	}
-	if subinword("`contours'","`markcontour'","",1)=="`contours'"{
-		di as error `"Option -markcontour- contains the string "`markcontour'" which is not one of the contours `contours' that you asked to compute"'
+if (`"`markup'"'!=""|`"`marklow'"'!="") & `markcontour'!=.{ //checks that `markcontour' is one of the contours	
+	if !inlist(`markcontour',`=subinstr("`contours'"," ",",",.)'){
+		di as error `"Option -markcontour- contains the value "`markcontour'" which is not one of the contours `contours' that you asked to compute"'
 		error 198
 	}	
 }
@@ -238,8 +233,8 @@ if "`scattercolor'" == "" { // default significance contours
 }
 
 local ncontours = wordcount("`contours'")
-if (`"`markup'"'!=""|`"`marklow'"'!="") & "`markcontour'"==""{ //default for contour whose external should be marked
-	local markcontour=word(`"`contours'"',1)
+if (`"`markup'"'!=""|`"`marklow'"'!="") & `markcontour'==.{ //default for contour whose external should be marked
+	local markcontour:word 1 of `contours'
 }
 /*a string with a dot cannot be the name of a local macro; hence in the names `c' of the confidence levels dots are substituted by the string -dot-, and the corresponding numbers are stored in local macros number`c'*/
 local contours: subinstr local contours "." "_",all
@@ -550,12 +545,14 @@ capture noisily{
 			capture confirm numeric variable `unit'
 			//some of what follows would be far better managed with a regex, but as far as I am awatre the regex functions onlty replace the FIRST instance
 			if (_rc==0) {
-				local markunits = subinstr("`markunits'", " ", ",", .)
-				local markunits = subinstr("`markunits'", ",,", ",", .)
+				while (regexm("`markunits'", " +")){
+					local markunits = regexr("`markunits'", " +", "," )
+				}
 			}
 			else {
-				local markunits = subinstr(`"`markunits'"', `"" ""', `"",""', .)
-				local markunits = subinstr(`"`markunits'"', `""  ""', `"",""', .)
+				while (regexm(`"`markunits'"', `"" +""')){
+					local markunits = regexr(`"`markunits'"', `"" +""', `"",""')
+				}
 			}
 			local ++maxmarkcond
 			local markcond`maxmarkcond' inlist(`unit',`markunits')
