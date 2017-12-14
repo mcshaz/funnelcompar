@@ -546,11 +546,9 @@ capture noisily{
 			//some of what follows would be far better managed with a regex, but as far as I am awatre the regex functions onlty replace the FIRST instance
 			
 			if (_rc==0) {
-				if c(stata_version)>=14 {
-					//newer regex replace all command
-					ustrregexra("`markunits'", " +", ",")
-				}
-				else {
+				//newer regex replace all command
+				capture local markunits = ustrregexra("`markunits'", " +", ",")
+				if (_rc!=0) {
 					while (regexm("`markunits'", " +")){
 					   local markunits = regexr("`markunits'", " +", ",")
 					}
@@ -558,10 +556,8 @@ capture noisily{
 			}
 			else {
 				//if version>=14 ustrregexra(`"`markunits'"', `"" +""', `"",""')
-				if c(stata_version)>=14 {
-					ustrregexra(`"`markunits'"', `"" +""', `"",""')
-				}
-				else {
+				capture local markunits = ustrregexra(`"`markunits'"', `"" +""', `"",""')
+				if (_rc!=0) {
 					while (regexm(`"`markunits'"', `"" +""')){
 						local markunits = regexr(`"`markunits'"', `"" +""', `"",""')
 					}
