@@ -13,7 +13,7 @@ help for {hi:funnelperform}{right:(Brent McSharry, Silvia Forni, Rosa Gini)}
 {title:Syntax}
 
 {p 8 13 2}
-{cmd:funnelcompar} {it:outcome population_size identifier [std_dev]} {ifin} [{help weight:iweight}] {cmd:,} {opt cont:inuous/}{opt binom:ial/}{opt pois:son/}{opt gamma:/}{opt beta: }} [{opt smr}] [
+{cmd:funnelperform} {it:outcome population_size identifier [std_dev]} {ifin} [{help weight:iweight}] {cmd:,} {opt cont:inuous/}{opt binom:ial/}{opt pois:son/}{opt gamma:/}{opt beta: }} [{opt smr}] [
 	{it:options}] 
 
 {synoptset 28 tabbed}{...}
@@ -237,9 +237,10 @@ Spiegelhalter, DJ. Funnel plots for comparing institutional performance. {it:Sta
 
 {title:Also see}
 
-{psee}
-Silvia Forni, Rosa Gini. Funnel plots for institutional comparisons. {it:2009 UK Stata Users Group meeting.} {browse "http://www.stata.com/meeting/uk09/abstracts.html#gini":abstract} 
-{browse "http://ideas.repec.org/s/boc/usug09.html":presentation}
-{psee}
-Online:  {helpb confunnel} (if installed)
+{psee}Silvia Forni, Rosa Gini. Funnel plots for institutional comparisons. {it:2009 UK Stata Users Group meeting}.  See the
+{browse "http://www.stata.com/meeting/uk09/abstracts.html#gini":abstract} or the
+{browse "http://repec.org/usug2009/Gini-Forni.pdf":presentation(pdf)}
 {p_end}
+{psee} {helpb confunnel} (Contour-enhanced funnel plots for meta-analysis).{p_end}
+{psee} {helpb extfunnel} (graphical augmentations to the funnel plot to indicate the potential impact of a new study on an existing meta-analysis).{p_end}
+
