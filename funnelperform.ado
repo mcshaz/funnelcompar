@@ -4,10 +4,8 @@
 // corrected bug in markupcolor and marklowcolor
 // moved -twowayopts- at the end of the graph command, so that it might override any other default
 
-
-
 *! 1.1 31oct2017 minor bug fixes from funnelcompar rosa gini, silvia forni (based on confunnel by tom palmer and on eclplot by roger newson)
- 
+*! 1.2 fixed [if] [in] & scatteroptsapplied to main scatter even if no markall opt
 program funnelperform, rclass sortpreserve
 version 9.1
 
@@ -568,8 +566,9 @@ capture noisily{
 			local labelcond`maxmarkcond' 1
 		}
 		if("`markall'"!="") {
-			local mainscatteropts mlabel(`unit') `scatteropts'
+			local mainscatteropts mlabel(`unit')
 		}
+		local mainscatteropts `mainscatteropts' `scatteropts'
 		numlist "1(1)`maxmarkcond'"
 		foreach i in "" `r(numlist)' {
 			if `"`markcond`i''"'!=""{
@@ -581,7 +580,7 @@ capture noisily{
 				}
 				local markval = `i' +4
 				replace `marker' = `markval' if `_funnel'==1 & `markcond`i''
-				local markconditions `markconditions' scatter `scatterargs' if `marker' == `markval', mc(`colormarkcond`i'') `optionsmarkcond`i''
+				local markconditions `markconditions' scatter `scatterargs' if `marker' == `markval' & `touse', mc(`colormarkcond`i'') `optionsmarkcond`i''
 				if ("`labelcond`i''"!="") {
 					local markconditions `markconditions' mlabel(`unit') mlabcolor(`colormarkcond`i'')
 				}
@@ -603,7 +602,7 @@ capture noisily{
 				if "`markscatter`lev'options'"==""{
 					local markscatter`lev'options `scatteropts'
 				}
-				local mark`lev'scatter `mark`lev'scatter' scatter `scatterargs' if `ifstate', mc(`mark`lev'color') `markscatter`lev'options' mlabel(`unit') mlabcolor(`mark`lev'color') ||
+				local mark`lev'scatter `mark`lev'scatter' scatter `scatterargs' if `ifstate' & `touse', mc(`mark`lev'color') `markscatter`lev'options' mlabel(`unit') mlabcolor(`mark`lev'color') ||
 			}
 		}
 	}
@@ -635,7 +634,7 @@ capture noisily{
 		local legendtot `"off"'
 	}
 	// ACTUAL GENERATION OF GRAPH
-	local graph_command `"twoway scatter `scatterargs' if `marker'==1 , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`=`ext_stand'*`constant'',lcolor(`linecolor') ) ytitle(`"`val_label'"') `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
+	local graph_command `"twoway scatter `scatterargs' if `marker'==1 & `touse' , mc(`scattercolor') `mainscatteropts' || `function' `markupscatter' `marklowscatter' `markconditions' `extraplot' , `x'line(`=`ext_stand'*`constant'',lcolor(`linecolor') ) ytitle(`"`val_label'"') `aspectratio' `y'scale(`reverse') ylabel(, angle(horizontal)) `xtitle' `ytitle' `title' legend(`legendtot') `marktext' `markuptext' `marklowtext' `twowayopts'"'
 	if "`displaycommand'"!=""{
 		di in ye `"`graph_command'"'
 	}
